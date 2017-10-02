@@ -4,7 +4,7 @@
 import time
 import httplib
 
-with open ("IPaddrs.txt","r") as openfileobject:
+with open ("IPaddrs-short.txt","r") as openfileobject:
 	for line in openfileobject:
 		ipAddr = line.strip()
 		if ipAddr:
