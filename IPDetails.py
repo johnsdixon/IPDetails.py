@@ -27,6 +27,11 @@ with open (inputfilename,"r") as inputhandle:
 			resp = http.getresponse()
 			# Don't overload the API server,
 			# wait half a second between iterations
+
+			# This is causing issues - need to refactor for CSV 
+			# (entries with , break things
+			# e.g. "AS6939 Hurricane Electric, Inc.")
+
 			data = resp.read().split(',')
 			time.sleep(.5)
 			
