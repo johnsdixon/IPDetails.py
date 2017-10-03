@@ -1,17 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import io
+import csv
 import time
 import httplib
 
-# Print the CSV output headers - might use csv library to do this neater
-print "Id,Label,AS#,AS Name,Country,Region"
+# Print the CSV output headers
+outputfile = open ("IPAddrs.out","wb")
+writer = csv.writer(outputfile)
+csvfields = ['Id','Label','AS#','AS Name','Country Code','Country','Region']
+outputhandle = csv.DictWriter(outputfile, fieldnames=csvfields)
+outputhandle.writeheader()
+
+
 
 # Get a connection to the webserver
 http = httplib.HTTPConnection('ip-api.com')
 
-with open ("IPaddrs.txt","r") as openfileobject:
-	for line in openfileobject:
+with open ("IPaddrs-short.txt","r") as inputhandle:
+	for line in inputhandle:
 		ipAddr = line.strip()
 		if ipAddr:
 
@@ -31,6 +39,6 @@ with open ("IPaddrs.txt","r") as openfileobject:
 				print "Broken"
 		
 http.close()
-openfileobject.close()
-
+inputhandle.close()
+outputfile.close()
 
