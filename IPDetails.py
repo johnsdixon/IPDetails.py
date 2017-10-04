@@ -1,16 +1,15 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
+from ast import literal_eval
 import csv
 import httplib
+import socket
 import time
 
 inputfilename = 'IPAddrs.txt'
 outputfilename = 'IPAddrs.out'
-csvdialect = {'__module__': 'csv', 'lineterminator': '\r\n', 'skipinitialspace': False, 'quoting': 0, '_name': 'sniffed', 'delimiter': ',', 'quotechar': '"', '__doc__': None, 'doublequote': False}
-
 outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
-apifields = ['success','Country','Country Code','Region Code','Region','City','Zip','Lat','Long','TZ','ISP Name','Org Name','ASN Name','QueryIP']
 
 datablock = {}
 
@@ -32,19 +31,36 @@ for ipAddr in datablock:
 		if ipAddr:
 			# Don't overload the API server,
 			# wait half a second between iterations
+			print ipAddr,
 			time.sleep(.5)
 
 			http.request("GET","/json/"+ipAddr)
 			resp = http.getresponse()
+			# remove unicode characters in some of the returned text
+			data = literal_eval(resp.read().decode('utf-8','replace'))
 
-			data=resp.read()
+			# data now holds API response
+			# see if we have a rDNS available
+			try:
+				name,alias,addrlist = socket.gethostbyaddr(ipAddr)
+			except socket.herror:
+				name, alias,addrlist = None, None, None
+			
+			# If we've got a successful lookup, add it to the data
+			# or use the IP address if not
+			if name == None:
+				u = {'Label':ipAddr}
+				print
+			else:
+				u = {'Label':name}
+				print name
+			data.update(u)
+
 			l={ipAddr:data}
 			datablock.update(l)
-
+			
 # In this block we need to look at spliting out the AS# and ASName from
 # the as field from the API.
-# Also need to do a reverse lookup on the IP Address (it might be useful)
-# (and it burns time for the API, which we can subtract from the delay.)
 
 http.close()
 
@@ -56,8 +72,8 @@ outputhandle.writeheader()
 
 # Now process the JSON data and output as CSV
 for ipAddr,data in datablock.iteritems():
-	outrow={"Id":ipAddr,"Label":ipAddr}
-	outrow.update(eval(data))
+	outrow={"Id":ipAddr}
+	outrow.update(data)
 	outputhandle.writerow(outrow)
 outputfile.close()
 
