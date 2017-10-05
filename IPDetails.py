@@ -35,7 +35,15 @@ for ipAddr in datablock:
 			time.sleep(.5)
 
 			http.request("GET","/json/"+ipAddr)
-			resp = http.getresponse()
+			try:
+				resp = http.getresponse()
+
+			except httplib.BadStatusLine:
+				# Close and reopen HTTP connection
+				http.close()
+				http = httplib.HTTPConnection('ip-api.com')
+				http.request("GET","/json/"+ipAddr)
+				resp = http.getresponse()
 
 			# remove unicode characters in some of the returned text
 			data = literal_eval(resp.read().decode('utf-8','replace'))
@@ -61,15 +69,17 @@ for ipAddr in datablock:
 			# the as field from the API.
 			ws=data.get('as')
 			if not ws==None:
-				wt=ws.split(" ",1)
-				wu=wt[0]
-				wv=wt[1]
-				# Check we're not dealing with a quoted string
-				if ws[0] == '"':
-					wu=wu[3:]
-					wv=wv[0:-1]
-				else:
-					wu=wu[2:]
+				if not ws=="":
+					wt=ws.split(" ",1)
+					wu=wt[0]
+					wv=wt[1]
+
+					# Check we're not dealing with a quoted string
+					if ws[0] == '"':
+						wu=wu[3:]
+						wv=wv[0:-1]
+					else:
+						wu=wu[2:]
 			else:
 				# It's not a real AS, replace AS# with 0, ASName with message
 				wu='0'
