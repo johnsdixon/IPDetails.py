@@ -36,6 +36,7 @@ for ipAddr in datablock:
 
 			http.request("GET","/json/"+ipAddr)
 			resp = http.getresponse()
+
 			# remove unicode characters in some of the returned text
 			data = literal_eval(resp.read().decode('utf-8','replace'))
 
@@ -56,11 +57,31 @@ for ipAddr in datablock:
 				print name
 			data.update(u)
 
+			# In this block we need to look at spliting out the AS# and ASName from
+			# the as field from the API.
+			ws=data.get('as')
+			if not ws==None:
+				wt=ws.split(" ",1)
+				wu=wt[0]
+				wv=wt[1]
+				# Check we're not dealing with a quoted string
+				if ws[0] == '"':
+					wu=wu[3:]
+					wv=wv[0:-1]
+				else:
+					wu=wu[2:]
+			else:
+				# It's not a real AS, replace AS# with 0, ASName with message
+				wu='0'
+				wv=data.get('message')
+				
+			data.update({"AS#":int(wu)})
+			data.update({"ASName":wv})
+
+			# Update the data block with the information for the IP address
 			l={ipAddr:data}
 			datablock.update(l)
 			
-# In this block we need to look at spliting out the AS# and ASName from
-# the as field from the API.
 
 http.close()
 
