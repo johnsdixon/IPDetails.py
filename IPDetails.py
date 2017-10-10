@@ -2,24 +2,36 @@
 # -*- coding: utf-8 -*-
 
 from ast import literal_eval
+import argparse
 import csv
 import httplib
 import socket
 import time
 
-inputfilename = 'IPAddrs.txt'
-outputfilename = 'IPAddrs.out'
-outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
+parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='(C) 2017 John S. Dixon')
+parser.add_argument('-f',dest='force',help='Force overwrite of output-filename, if it exists',action='store_true')
+parser.add_argument('inputfilename',nargs='?',default='IPAddrs.txt',help='Input filename containing IP Addresses, one per line')
+parser.add_argument('outputfilename',nargs='?',default='IPAddrs.csv',help='Output filename containing IP Address, ASN, ISP, GeoIP and other information')
+args = parser.parse_args()
 
+print 'Using parameters:'
+print '  Input file  :',args.inputfilename
+print '  Output file :',args.outputfilename
+
+if args.force:
+	print '  Overwriting output file if it exists'
+
+# Probably need to check if the output file exists upfront to save time.
+
+
+# Now open the file and read the IP addresses contained
 datablock = {}
-
-# Get the Input File and store
-
-with open (inputfilename,"r") as inputhandle:
+with open (args.inputfilename,"r") as inputhandle:
 	for line in inputhandle:
 		ipAddr = line.strip()
 		datablock.update({ipAddr:{}})
 inputhandle.close()
+
 
 # We now have the list of IP addresses we want to look at in the datablock,
 # with an empty dict as placeholders for values
@@ -96,7 +108,9 @@ for ipAddr in datablock:
 http.close()
 
 # Print the CSV output headers
-outputfile = open (outputfilename,"wb")
+outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
+
+outputfile = open (args.outputfilename,"wb")
 writer = csv.writer(outputfile)
 outputhandle = csv.DictWriter(outputfile, fieldnames=outfields)
 outputhandle.writeheader()
