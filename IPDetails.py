@@ -15,7 +15,7 @@ import socket
 import time
 
 def main():
-	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='(C) 2017 John S. Dixon')
+	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
 	parser.add_argument('-f',dest='force',help='Force overwrite of output-filename, if it exists',action='store_true')
 	parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
 	parser.add_argument('inputfilename',nargs='?',default='IPAddrs.txt',help='Input filename containing IP Addresses, one per line')
