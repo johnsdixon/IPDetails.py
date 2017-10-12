@@ -22,4 +22,4 @@ optional arguments:
   -f              Force overwrite of output-filename, if it exists
   -v              Display the software verison
 
-(c) 2017 John S. Dixon
+Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon. 
