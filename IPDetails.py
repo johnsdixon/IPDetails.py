@@ -95,7 +95,7 @@ def main():
 					name,alias,addrlist = socket.gethostbyaddr(ipAddr)
 				except socket.herror:
 					name, alias,addrlist = None, None, None
-			
+
 				# If we've got a successful lookup, add it to the data
 				# or use the IP address if not
 				if name == None:
@@ -125,14 +125,14 @@ def main():
 					# It's not a real AS, replace AS# with 0, ASName with message
 					wu='0'
 					wv=data.get('message')
-				
+
 				data.update({"AS#":int(wu)})
 				data.update({"ASName":wv})
 
 				# Update the data block with the information for the IP address
 				l={ipAddr:data}
 				datablock.update(l)
-			
+
 	http.close()
 
 	# Print the CSV output headers
@@ -153,4 +153,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
