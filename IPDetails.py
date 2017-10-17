@@ -25,6 +25,7 @@ def import_datablock(filename):
 	inputhandle.close()
 
 def process_datablock():
+	# Get connection to the server
 	http = httplib.HTTPConnection('ip-api.com')
 	for ipAddr in datablock:
 			if ipAddr:
@@ -93,6 +94,8 @@ def process_datablock():
 	http.close()
 
 def output_datablock(filename):
+
+	# Print the CSV output headers
 	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
 
 	outputfile = open (filename,"wb")
@@ -149,18 +152,13 @@ def main():
 	# Now open the file and read the IP addresses contained
 	print
 
+	# Create a list of IP addresses in a datablock. This has an empty dict as a placeholder
+	# Use these to get details of the IP address from the IP-API.COM server,
+	# add a locally-resolved rDNS lookup,
+	# output the file
 	import_datablock(args.inputfilename)
-
-	# We now have the list of IP addresses we want to look at in the datablock,
-	# with an empty dict as placeholders for values
-
-	# Get a connection to the webserver
-
 	process_datablock()
-
 	output_datablock(args.outputfilename)
-
-	# Print the CSV output headers
 
 if __name__ == "__main__":
     main()
