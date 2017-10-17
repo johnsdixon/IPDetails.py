@@ -17,6 +17,26 @@ import time
 # Setup global variables
 datablock = {}
 
+def splitASdetails(combined,string):
+	# In this block we need to look at spliting out the AS# and ASName from
+	# the as field from the API.
+	if not combined==None:
+		if not combined=="":
+			temp=combined.split(" ",1)
+			asn=temp[0]
+			name=temp[1]
+
+		# Check we're not dealing with a quoted string
+		if asn[0] == '"':
+			asn=asn[3:]
+			name=name[0:-1]
+		else:
+			asn=asn[2:]
+	else:
+			asn=0
+			name=string
+	return(asn,name)
+
 def import_datablock(filename):
 	with open (filename,"r") as inputhandle:
 		for line in inputhandle:
@@ -62,28 +82,28 @@ def process_datablock():
 					print
 				else:
 					u = {'Label':name}
-				print name
+					print name
 				data.update(u)
 
 				# In this block we need to look at spliting out the AS# and ASName from
 				# the as field from the API.
-				ws=data.get('as')
-				if not ws==None:
-					if not ws=="":
-						wt=ws.split(" ",1)
-						wu=wt[0]
-						wv=wt[1]
+				wu,wv=splitASdetails(data.get('as'),data.get('message'))
+				#if not ws==None:
+				#	if not ws=="":
+				#		wt=ws.split(" ",1)
+				#		wu=wt[0]
+				#		wv=wt[1]
 
 						# Check we're not dealing with a quoted string
-						if ws[0] == '"':
-							wu=wu[3:]
-							wv=wv[0:-1]
-						else:
-							wu=wu[2:]
-				else:
-					# It's not a real AS, replace AS# with 0, ASName with message
-					wu='0'
-					wv=data.get('message')
+				#		if ws[0] == '"':
+				#			wu=wu[3:]
+				#			wv=wv[0:-1]
+				#		else:
+				#			wu=wu[2:]
+				#else:
+				#	# It's not a real AS, replace AS# with 0, ASName with message
+				#	wu='0'
+				#	wv=data.get('message')
 
 				data.update({"AS#":int(wu)})
 				data.update({"ASName":wv})
