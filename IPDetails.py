@@ -17,6 +17,22 @@ import time
 # Setup global variables
 datablock = {}
 
+def callAPI(http,addr):
+	http.request("GET","/json/"+addr)
+	try:
+		resp = http.getresponse()
+
+	except httplib.BadStatusLine:
+		# Close and reopen HTTP connection
+		http.close()
+		http = httplib.HTTPConnection('ip-api.com')
+		http.request("GET","/json/"+addr)
+		resp = http.getresponse()
+
+	# remove unicode characters in some of the returned text
+	data = literal_eval(resp.read().decode('utf-8','replace'))
+	return (data)
+
 def splitASdetails(combined,string):
 	# In this block we need to look at spliting out the AS# and ASName from
 	# the as field from the API.
@@ -54,19 +70,7 @@ def process_datablock():
 				print ipAddr,
 				time.sleep(.5)
 
-				http.request("GET","/json/"+ipAddr)
-				try:
-					resp = http.getresponse()
-
-				except httplib.BadStatusLine:
-					# Close and reopen HTTP connection
-					http.close()
-					http = httplib.HTTPConnection('ip-api.com')
-					http.request("GET","/json/"+ipAddr)
-					resp = http.getresponse()
-
-				# remove unicode characters in some of the returned text
-				data = literal_eval(resp.read().decode('utf-8','replace'))
+				data = callAPI(http,ipAddr)
 
 				# data now holds API response
 				# see if we have a rDNS available
@@ -85,26 +89,7 @@ def process_datablock():
 					print name
 				data.update(u)
 
-				# In this block we need to look at spliting out the AS# and ASName from
-				# the as field from the API.
 				wu,wv=splitASdetails(data.get('as'),data.get('message'))
-				#if not ws==None:
-				#	if not ws=="":
-				#		wt=ws.split(" ",1)
-				#		wu=wt[0]
-				#		wv=wt[1]
-
-						# Check we're not dealing with a quoted string
-				#		if ws[0] == '"':
-				#			wu=wu[3:]
-				#			wv=wv[0:-1]
-				#		else:
-				#			wu=wu[2:]
-				#else:
-				#	# It's not a real AS, replace AS# with 0, ASName with message
-				#	wu='0'
-				#	wv=data.get('message')
-
 				data.update({"AS#":int(wu)})
 				data.update({"ASName":wv})
 
