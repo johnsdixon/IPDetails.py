@@ -18,10 +18,12 @@ import time
 datablock = {}
 
 def callAPI(http,addr):
+	# Call the API
 	http.request("GET","/json/"+addr)
 	try:
 		resp = http.getresponse()
 
+	# if it failed, close and reopen, we might have overstayed our welcome
 	except httplib.BadStatusLine:
 		# Close and reopen HTTP connection
 		http.close()
@@ -42,7 +44,7 @@ def splitASdetails(combined,string):
 			asn=temp[0]
 			name=temp[1]
 
-		# Check we're not dealing with a quoted string
+		# Check we're not dealing with a quoted string, if we are trim quotes
 		if asn[0] == '"':
 			asn=asn[3:]
 			name=name[0:-1]
@@ -117,7 +119,7 @@ def output_datablock(filename):
 
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
-	parser.add_argument('-f',dest='force',help='Force overwrite of output-filename, if it exists',action='store_true')
+	parser.add_argument('-o',dest='overwrite',help='Overwrite of output-filename, if it exists',action='store_true')
 	parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
 	parser.add_argument('inputfilename',nargs='?',default='IPAddrs.txt',help='Input filename containing IP Addresses, one per line')
 	parser.add_argument('outputfilename',nargs='?',default='IPAddrs.csv',help='Output filename containing IP Address, ASN, ISP, GeoIP and other information')
@@ -126,7 +128,7 @@ def main():
 	if args.version:
 		# Need to look at moving these to functions so can be changed easily
 		print 'IPDetails.py',
-		print '0.9b-20171010'
+		print '0.9b-20171023'
 		print
 		print 'IPDetails.py',
 		print 'is a program for adding details about an IP address.'
@@ -138,13 +140,13 @@ def main():
 	print '  Input file  :',args.inputfilename
 
 	# Check if the output file exists upfront to save time.
-	if args.force:
+	if args.overwrite:
 		if os.path.exists(args.outputfilename):
 			print '  Output file :',
 			print args.outputfilename,
 			print 'will be overwritten'
 		else:
-			print '  Force overwrite specified, but ',
+			print '  Overwrite specified, but ',
 			print args.outputfilename,
 			print 'doesn\'t exist.'
 	else:
