@@ -14,6 +14,107 @@ import os.path
 import socket
 import time
 
+# Setup global variables
+datablock = {}
+
+def callAPI(http,addr):
+	http.request("GET","/json/"+addr)
+	try:
+		resp = http.getresponse()
+
+	except httplib.BadStatusLine:
+		# Close and reopen HTTP connection
+		http.close()
+		http = httplib.HTTPConnection('ip-api.com')
+		http.request("GET","/json/"+addr)
+		resp = http.getresponse()
+
+	# remove unicode characters in some of the returned text
+	data = literal_eval(resp.read().decode('utf-8','replace'))
+	return (data)
+
+def splitASdetails(combined,string):
+	# In this block we need to look at spliting out the AS# and ASName from
+	# the as field from the API.
+	if not combined==None:
+		if not combined=="":
+			temp=combined.split(" ",1)
+			asn=temp[0]
+			name=temp[1]
+
+		# Check we're not dealing with a quoted string
+		if asn[0] == '"':
+			asn=asn[3:]
+			name=name[0:-1]
+		else:
+			asn=asn[2:]
+	else:
+			asn=0
+			name=string
+	return(asn,name)
+
+def import_datablock(filename):
+	with open (filename,"r") as inputhandle:
+		for line in inputhandle:
+			ipAddr = line.strip()
+			datablock.update({ipAddr:{}})
+	inputhandle.close()
+
+def process_datablock():
+	# Get connection to the server
+	http = httplib.HTTPConnection('ip-api.com')
+	for ipAddr in datablock:
+			if ipAddr:
+				# Don't overload the API server,
+				# wait half a second between iterations
+				print ipAddr,
+				time.sleep(.5)
+
+				data = callAPI(http,ipAddr)
+
+				# data now holds API response
+				# see if we have a rDNS available
+				try:
+					name,alias,addrlist = socket.gethostbyaddr(ipAddr)
+				except socket.herror:
+					name, alias,addrlist = None, None, None
+
+				# If we've got a successful lookup, add it to the data
+				# or use the IP address if not
+				if name == None:
+					u = {'Label':ipAddr}
+					print
+				else:
+					u = {'Label':name}
+					print name
+				data.update(u)
+
+				wu,wv=splitASdetails(data.get('as'),data.get('message'))
+				data.update({"AS#":int(wu)})
+				data.update({"ASName":wv})
+
+				# Update the data block with the information for the IP address
+				l={ipAddr:data}
+				datablock.update(l)
+	http.close()
+
+def output_datablock(filename):
+
+	# Print the CSV output headers
+	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
+
+	outputfile = open (filename,"wb")
+	writer = csv.writer(outputfile)
+	outputhandle = csv.DictWriter(outputfile, fieldnames=outfields)
+	outputhandle.writeheader()
+
+	# Now process the JSON data and output as CSV
+	for ipAddr,data in datablock.iteritems():
+		outrow={"Id":ipAddr}
+		outrow.update(data)
+		outputhandle.writerow(outrow)
+	outputfile.close()
+
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
 	parser.add_argument('-f',dest='force',help='Force overwrite of output-filename, if it exists',action='store_true')
@@ -55,102 +156,14 @@ def main():
 
 	# Now open the file and read the IP addresses contained
 	print
-	datablock = {}
-	with open (args.inputfilename,"r") as inputhandle:
-		for line in inputhandle:
-			ipAddr = line.strip()
-			datablock.update({ipAddr:{}})
-	inputhandle.close()
 
-	# We now have the list of IP addresses we want to look at in the datablock,
-	# with an empty dict as placeholders for values
-
-	# Get a connection to the webserver
-	http = httplib.HTTPConnection('ip-api.com')
-
-	for ipAddr in datablock:
-			if ipAddr:
-				# Don't overload the API server,
-				# wait half a second between iterations
-				print ipAddr,
-				time.sleep(.5)
-
-				http.request("GET","/json/"+ipAddr)
-				try:
-					resp = http.getresponse()
-
-				except httplib.BadStatusLine:
-					# Close and reopen HTTP connection
-					http.close()
-					http = httplib.HTTPConnection('ip-api.com')
-					http.request("GET","/json/"+ipAddr)
-					resp = http.getresponse()
-
-				# remove unicode characters in some of the returned text
-				data = literal_eval(resp.read().decode('utf-8','replace'))
-
-				# data now holds API response
-				# see if we have a rDNS available
-				try:
-					name,alias,addrlist = socket.gethostbyaddr(ipAddr)
-				except socket.herror:
-					name, alias,addrlist = None, None, None
-			
-				# If we've got a successful lookup, add it to the data
-				# or use the IP address if not
-				if name == None:
-					u = {'Label':ipAddr}
-					print
-				else:
-					u = {'Label':name}
-				print name
-				data.update(u)
-
-				# In this block we need to look at spliting out the AS# and ASName from
-				# the as field from the API.
-				ws=data.get('as')
-				if not ws==None:
-					if not ws=="":
-						wt=ws.split(" ",1)
-						wu=wt[0]
-						wv=wt[1]
-
-						# Check we're not dealing with a quoted string
-						if ws[0] == '"':
-							wu=wu[3:]
-							wv=wv[0:-1]
-						else:
-							wu=wu[2:]
-				else:
-					# It's not a real AS, replace AS# with 0, ASName with message
-					wu='0'
-					wv=data.get('message')
-				
-				data.update({"AS#":int(wu)})
-				data.update({"ASName":wv})
-
-				# Update the data block with the information for the IP address
-				l={ipAddr:data}
-				datablock.update(l)
-			
-	http.close()
-
-	# Print the CSV output headers
-	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
-
-	outputfile = open (args.outputfilename,"wb")
-	writer = csv.writer(outputfile)
-	outputhandle = csv.DictWriter(outputfile, fieldnames=outfields)
-	outputhandle.writeheader()
-
-	# Now process the JSON data and output as CSV
-	for ipAddr,data in datablock.iteritems():
-		outrow={"Id":ipAddr}
-		outrow.update(data)
-		outputhandle.writerow(outrow)
-	outputfile.close()
-
+	# Create a list of IP addresses in a datablock. This has an empty dict as a placeholder
+	# Use these to get details of the IP address from the IP-API.COM server,
+	# add a locally-resolved rDNS lookup,
+	# output the file
+	import_datablock(args.inputfilename)
+	process_datablock()
+	output_datablock(args.outputfilename)
 
 if __name__ == "__main__":
     main()
-
