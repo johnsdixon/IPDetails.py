@@ -144,7 +144,7 @@ def main():
 			print args.outputfilename,
 			print 'will be overwritten'
 		else:
-			print '  Force overwrite specified, but ',
+			print '  Force overwrite specified, but',
 			print args.outputfilename,
 			print 'doesn\'t exist.'
 	else:
