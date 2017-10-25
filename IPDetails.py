@@ -91,7 +91,11 @@ def process_datablock():
 					print name
 				data.update(u)
 
-				wu,wv=splitASdetails(data.get('as'),data.get('message'))
+				if not data.get('as') == "":
+					wu,wv=splitASdetails(data.get('as'),data.get('message'))
+				else:
+					wu = 0
+					wv = data.get('message')
 				data.update({"AS#":int(wu)})
 				data.update({"ASName":wv})
 
