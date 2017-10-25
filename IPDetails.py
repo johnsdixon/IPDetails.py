@@ -35,7 +35,7 @@ def callAPI(http,addr):
 
 def getrDNS(addr):
 	try:
-		name,alias,addrlist = socket.gethostbyaddr(ipAddr)
+		name,alias,addrlist = socket.gethostbyaddr(addr)
 	except socket.herror:
 		name,alias,addrlist = None, None, None
 	return (name,alias,addrlist)
@@ -82,7 +82,7 @@ def process_datablock():
 				# data now holds API response
 				# see if we have a rDNS available
 				name,alias,addrlist = getrDNS(ipAddr)
-				
+
 				# If we've got a successful lookup, add it to the data
 				# or use the IP address if not
 				if name == None:
