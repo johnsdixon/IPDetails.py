@@ -18,12 +18,10 @@ import time
 datablock = {}
 
 def callAPI(http,addr):
-	# Call the API
 	http.request("GET","/json/"+addr)
 	try:
 		resp = http.getresponse()
 
-	# if it failed, close and reopen, we might have overstayed our welcome
 	except httplib.BadStatusLine:
 		# Close and reopen HTTP connection
 		http.close()
@@ -35,6 +33,13 @@ def callAPI(http,addr):
 	data = literal_eval(resp.read().decode('utf-8','replace'))
 	return (data)
 
+def getrDNS(addr):
+	try:
+		name,alias,addrlist = socket.gethostbyaddr(addr)
+	except socket.herror:
+		name,alias,addrlist = None, None, None
+	return (name,alias,addrlist)
+
 def splitASdetails(combined,string):
 	# In this block we need to look at spliting out the AS# and ASName from
 	# the as field from the API.
@@ -44,7 +49,7 @@ def splitASdetails(combined,string):
 			asn=temp[0]
 			name=temp[1]
 
-		# Check we're not dealing with a quoted string, if we are trim quotes
+		# Check we're not dealing with a quoted string
 		if asn[0] == '"':
 			asn=asn[3:]
 			name=name[0:-1]
@@ -70,16 +75,11 @@ def process_datablock():
 				# Don't overload the API server,
 				# wait half a second between iterations
 				print ipAddr,
-				time.sleep(.5)
 
 				data = callAPI(http,ipAddr)
-
 				# data now holds API response
 				# see if we have a rDNS available
-				try:
-					name,alias,addrlist = socket.gethostbyaddr(ipAddr)
-				except socket.herror:
-					name, alias,addrlist = None, None, None
+				name,alias,addrlist = getrDNS(ipAddr)
 
 				# If we've got a successful lookup, add it to the data
 				# or use the IP address if not
@@ -102,10 +102,11 @@ def process_datablock():
 				# Update the data block with the information for the IP address
 				l={ipAddr:data}
 				datablock.update(l)
+				time.sleep(.5)
+
 	http.close()
 
 def output_datablock(filename):
-
 	# Print the CSV output headers
 	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
 
@@ -123,7 +124,7 @@ def output_datablock(filename):
 
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
-	parser.add_argument('-o',dest='overwrite',help='Overwrite of output-filename, if it exists',action='store_true')
+	parser.add_argument('-f',dest='force',help='Force overwrite of output-filename, if it exists',action='store_true')
 	parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
 	parser.add_argument('inputfilename',nargs='?',default='IPAddrs.txt',help='Input filename containing IP Addresses, one per line')
 	parser.add_argument('outputfilename',nargs='?',default='IPAddrs.csv',help='Output filename containing IP Address, ASN, ISP, GeoIP and other information')
@@ -132,7 +133,7 @@ def main():
 	if args.version:
 		# Need to look at moving these to functions so can be changed easily
 		print 'IPDetails.py',
-		print '0.9b-20171023'
+		print '0.9b-20171025'
 		print
 		print 'IPDetails.py',
 		print 'is a program for adding details about an IP address.'
@@ -144,13 +145,13 @@ def main():
 	print '  Input file  :',args.inputfilename
 
 	# Check if the output file exists upfront to save time.
-	if args.overwrite:
+	if args.force:
 		if os.path.exists(args.outputfilename):
 			print '  Output file :',
 			print args.outputfilename,
 			print 'will be overwritten'
 		else:
-			print '  Overwrite specified, but ',
+			print '  Force overwrite specified, but',
 			print args.outputfilename,
 			print 'doesn\'t exist.'
 	else:
