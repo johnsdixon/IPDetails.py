@@ -77,7 +77,7 @@ def process_datablock():
 				try:
 					name,alias,addrlist = socket.gethostbyaddr(ipAddr)
 				except socket.herror:
-					name, alias,addrlist = None, None, None
+					name,alias,addrlist = None, None, None
 
 				# If we've got a successful lookup, add it to the data
 				# or use the IP address if not
@@ -89,7 +89,11 @@ def process_datablock():
 					print name
 				data.update(u)
 
-				wu,wv=splitASdetails(data.get('as'),data.get('message'))
+				if not data.get('as') == "":
+					wu,wv=splitASdetails(data.get('as'),data.get('message'))
+				else:
+					wu = 0
+					wv = data.get('message')
 				data.update({"AS#":int(wu)})
 				data.update({"ASName":wv})
 
@@ -126,7 +130,7 @@ def main():
 	if args.version:
 		# Need to look at moving these to functions so can be changed easily
 		print 'IPDetails.py',
-		print '0.9b-20171010'
+		print '0.9b-20171024'
 		print
 		print 'IPDetails.py',
 		print 'is a program for adding details about an IP address.'
@@ -144,7 +148,7 @@ def main():
 			print args.outputfilename,
 			print 'will be overwritten'
 		else:
-			print '  Force overwrite specified, but ',
+			print '  Force overwrite specified, but',
 			print args.outputfilename,
 			print 'doesn\'t exist.'
 	else:
