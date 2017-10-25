@@ -33,6 +33,13 @@ def callAPI(http,addr):
 	data = literal_eval(resp.read().decode('utf-8','replace'))
 	return (data)
 
+def getrDNS(addr):
+	try:
+		name,alias,addrlist = socket.gethostbyaddr(ipAddr)
+	except socket.herror:
+		name,alias,addrlist = None, None, None
+	return (name,alias,addrlist)
+
 def splitASdetails(combined,string):
 	# In this block we need to look at spliting out the AS# and ASName from
 	# the as field from the API.
@@ -74,11 +81,8 @@ def process_datablock():
 
 				# data now holds API response
 				# see if we have a rDNS available
-				try:
-					name,alias,addrlist = socket.gethostbyaddr(ipAddr)
-				except socket.herror:
-					name,alias,addrlist = None, None, None
-
+				name,alias,addrlist = getrDNS(ipAddr)
+				
 				# If we've got a successful lookup, add it to the data
 				# or use the IP address if not
 				if name == None:
