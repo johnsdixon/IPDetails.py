@@ -75,10 +75,8 @@ def process_datablock():
 				# Don't overload the API server,
 				# wait half a second between iterations
 				print ipAddr,
-				time.sleep(.5)
 
 				data = callAPI(http,ipAddr)
-
 				# data now holds API response
 				# see if we have a rDNS available
 				name,alias,addrlist = getrDNS(ipAddr)
@@ -104,10 +102,11 @@ def process_datablock():
 				# Update the data block with the information for the IP address
 				l={ipAddr:data}
 				datablock.update(l)
+				time.sleep(.5)
+
 	http.close()
 
 def output_datablock(filename):
-
 	# Print the CSV output headers
 	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
 
@@ -134,7 +133,7 @@ def main():
 	if args.version:
 		# Need to look at moving these to functions so can be changed easily
 		print 'IPDetails.py',
-		print '0.9b-20171024'
+		print '0.9b-20171025'
 		print
 		print 'IPDetails.py',
 		print 'is a program for adding details about an IP address.'
