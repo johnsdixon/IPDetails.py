@@ -10,6 +10,7 @@ from ast import literal_eval
 import argparse
 import csv
 import httplib
+import ipaddress
 import os.path
 import socket
 import time
@@ -72,37 +73,65 @@ def process_datablock():
 	http = httplib.HTTPConnection('ip-api.com')
 	for ipAddr in datablock:
 			if ipAddr:
-				# Don't overload the API server,
-				# wait half a second between iterations
+
+				# Validate we have a proper IP Address
 				print ipAddr,
 
-				data = callAPI(http,ipAddr)
-				# data now holds API response
-				# see if we have a rDNS available
-				name,alias,addrlist = getrDNS(ipAddr)
+				wu=0
+				wv=''
+				u = {'Label':ipAddr}
+				data={}
 
-				# If we've got a successful lookup, add it to the data
-				# or use the IP address if not
-				if name == None:
-					u = {'Label':ipAddr}
-					print
-				else:
-					u = {'Label':name}
-					print name
-				data.update(u)
+				try:
+					ipa = ipaddress.ip_address(unicode(ipAddr))
 
-				if not data.get('as') == "":
-					wu,wv=splitASdetails(data.get('as'),data.get('message'))
-				else:
-					wu = 0
-					wv = data.get('message')
-				data.update({"AS#":int(wu)})
-				data.update({"ASName":wv})
+					name,alias,addrlist = getrDNS(ipAddr)
+					# If we've got a successful lookup, add it to the data
+					# or use the IP address if not
+					if name == None:
+						print
+					else:
+						u = {'Label':name}
+						print name
 
-				# Update the data block with the information for the IP address
-				l={ipAddr:data}
-				datablock.update(l)
-				time.sleep(.5)
+					if ipa.is_multicast:
+						if ipa.version==4:
+							wv='RFC3171 Multicast Network'
+						else:
+							wv='RFC2373 Multicast Network'
+					elif ipa.is_loopback:
+						if ipa.version==4:
+							wv='RFC3330 Loopback Network'
+						else:
+							wv='RFC2372 Loopback Network'
+					elif ipa.is_private:
+						wv='RFC1918 Private Network'
+					else:
+						data = callAPI(http,ipAddr)
+						# data now holds API response
+						# see if we have a rDNS available
+
+						if not data.get('as') == "":
+							wu,wv=splitASdetails(data.get('as'),data.get('message'))
+						else:
+							wv = data.get('message')
+
+						# Don't overload the API server,
+						# wait half a second between iterations
+						time.sleep(.5)
+
+					data.update(u)
+					data.update({"AS#":int(wu)})
+					data.update({"ASName":wv})
+
+					# Update the data block with the information for the IP address
+					l={ipAddr:data}
+					datablock.update(l)
+
+				except ValueError:
+					print 'Skipping Invalid IP Address'
+					l={ipAddr:'Delete me'}
+					datablock.update(l)
 
 	http.close()
 
@@ -117,9 +146,10 @@ def output_datablock(filename):
 
 	# Now process the JSON data and output as CSV
 	for ipAddr,data in datablock.iteritems():
-		outrow={"Id":ipAddr}
-		outrow.update(data)
-		outputhandle.writerow(outrow)
+		if data != 'Delete me':
+			outrow={"Id":ipAddr}
+			outrow.update(data)
+			outputhandle.writerow(outrow)
 	outputfile.close()
 
 def main():
