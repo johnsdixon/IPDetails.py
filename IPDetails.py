@@ -65,6 +65,9 @@ def import_datablock(filename):
 	with open (filename,"r") as inputhandle:
 		for line in inputhandle:
 			ipAddr = line.strip()
+			# Remove leading 0's from IP address (if they occur)
+			# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
+			ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 			datablock.update({ipAddr:{}})
 	inputhandle.close()
 
