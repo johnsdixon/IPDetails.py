@@ -71,21 +71,11 @@ def process_address(ipAddr,http):
 
 		wu=0
 		wv=''
-		u = {'Id':ipAddr,'Label':ipAddr}
-		data={}
+		u = {'Label':ipAddr}
+		data={'Id':ipAddr}
 
 		try:
 			ipa = ipaddress.ip_address(unicode(ipAddr))
-
-			name,alias,addrlist = getrDNS(ipAddr)
-			# If we've got a successful lookup, add it to the data
-			# or use the IP address if not
-
-			if name == None:
-				print
-			else:
-				u = {'Label':name}
-				print name
 
 			if ipa.is_multicast:
 				if ipa.version==4:
@@ -112,6 +102,16 @@ def process_address(ipAddr,http):
 				# Don't overload the API server,
 				# wait half a second between iterations
 				time.sleep(.5)
+
+			name,alias,addrlist = getrDNS(ipAddr)
+			# If we've got a successful lookup, add it to the data
+			# or use the IP address if not
+
+			if name == None:
+				print
+			else:
+				u = {'Label':name}
+				print name
 
 			data.update(u)
 			data.update({"AS#":int(wu)})
