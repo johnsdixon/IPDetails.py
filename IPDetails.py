@@ -92,7 +92,8 @@ def process_address(ipAddr,http):
 					wv='RFC1918 Private Network'
 					u = {'Label':ipa.reverse_pointer}
 			else:
-				data = callAPI(ipAddr,http)
+				detail = callAPI(ipAddr,http)
+				data.update(detail)
 				# data now holds API response, split the AS
 
 				if not data.get('as') == "":
@@ -143,23 +144,22 @@ def output_csv(csvhandle,data):
 def output_json(filehandle,data):
 	json.dump(data,filehandle)
 
-def output_txt(filehandle,data):
-	filehandle.write(data)
+def output_txt(filehandle,data,density):
+	output_line=''
+	if density:
+		output_line = output_line+'Id:\t'+str(data.get('Id'))+'\t'+str(data.get('Label'))
+	else:
+		output_line = output_line+'Id:\t'+str(data.get('Id'))+' ('+str(data.get('Label'))+')\n'
+	filehandle.write(output_line)
 
 def display_version():
 	print 'IPDetails.py',
-	print '0.9c-20171115'
+	print '0.9d-20171115'
 	print
 	print 'IPDetails.py',
 	print 'is a program for finding details about an IP address.'
 	print 'The input is read from a file or stdin.'
-	print 'Output is to stdout, or to a file. Formatting can be set an option'
-
-def error_not_implemented():
-	print 'Apologies'
-	print 'That function is\'nt yet implemented'
-	print 'As it\'s a defined output, it is planned'
-	print 'the developer has a roadmap for it\'s delivery'
+	print 'Output is to stdout, or to a file. Formatting can be set as an option'
 
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
@@ -167,15 +167,11 @@ def main():
 	parser.add_argument('outputfilehandle',nargs='?',type=argparse.FileType('w'),default=sys.stdout,help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
 	parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
 	parser.add_argument('-f',dest='format',choices=['txt','csv','json'],help='Output as txt, csv or json format file.',default='csv')
+	parser.add_argument('-d',dest='detail',help='Set detailed level of text output',action='store_true')
 	args = parser.parse_args()
 
 	if args.version:
 		display_version()
-		return()
-
-	if args.format=='txt':
-	#or args.format=='json':
-		error_not_implemented()
 		return()
 
 	if args.format=='csv':
@@ -197,7 +193,7 @@ def main():
 			elif args.format=='json':
 				output_json(args.outputfilehandle,data)
 			elif args.format=='txt':
-				output_txt(args.outputfilehandle,data)
+				output_txt(args.outputfilehandle,data,args.detail)
 			else:
 				print 'Incorrect file output type selected',args.format
 
