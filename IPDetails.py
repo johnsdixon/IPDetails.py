@@ -13,6 +13,7 @@ import httplib
 import ipaddress
 import os.path
 import socket
+import sys
 import time
 
 # Setup global variables
@@ -91,6 +92,7 @@ def process_datablock():
 					name,alias,addrlist = getrDNS(ipAddr)
 					# If we've got a successful lookup, add it to the data
 					# or use the IP address if not
+
 					if name == None:
 						print
 					else:
@@ -111,8 +113,7 @@ def process_datablock():
 						wv='RFC1918 Private Network'
 					else:
 						data = callAPI(http,ipAddr)
-						# data now holds API response
-						# see if we have a rDNS available
+						# data now holds API response, split the AS
 
 						if not data.get('as') == "":
 							wu,wv=splitASdetails(data.get('as'),data.get('message'))
@@ -155,55 +156,41 @@ def output_datablock(filename):
 			outputhandle.writerow(outrow)
 	outputfile.close()
 
+def display_version():
+	print 'IPDetails.py',
+	print '0.9c-20171115'
+	print
+	print 'IPDetails.py',
+	print 'is a program for finding details about an IP address.'
+	print 'The input is read from a file or stdin.'
+	print 'Output is to stdout, or to a file. Formatting can be set an option'
+
+def error_not_implemented():
+	print 'Apologies'
+	print 'That function is\'nt yet implemented'
+	print 'As it\'s a defined output, it is planned'
+	print 'the developer has a roadmap for it\'s delivery'
+
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
-	parser.add_argument('-f',dest='force',help='Force overwrite of output-filename, if it exists',action='store_true')
+	parser.add_argument('inputfilename',nargs='?',type=argparse.FileType('r'),default=sys.stdin,help='Input filename containing IP Addresses, one per line.')
+	parser.add_argument('outputfilename',nargs='?',type=argparse.FileType('w'),default=sys.stdout,help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
 	parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
-	parser.add_argument('inputfilename',nargs='?',default='IPAddrs.txt',help='Input filename containing IP Addresses, one per line')
-	parser.add_argument('outputfilename',nargs='?',default='IPAddrs.csv',help='Output filename containing IP Address, ASN, ISP, GeoIP and other information')
+	parser.add_argument('-f',dest='format',choices=['txt','csv','json'],help='Output as txt, csv or json format file.',default='csv')
 	args = parser.parse_args()
 
 	if args.version:
 		# Need to look at moving these to functions so can be changed easily
-		print 'IPDetails.py',
-		print '0.9b-20171025'
-		print
-		print 'IPDetails.py',
-		print 'is a program for adding details about an IP address.'
-		print 'The input is read from a file, and output to another in a .csv format'
-		print
+		display_version()
 		return()
 
-	print 'Using parameters:'
-	print '  Input file  :',args.inputfilename
+	if args.format=='txt' or args.format=='json':
+		error_not_implemented()
+		return()
 
-	# Check if the output file exists upfront to save time.
-	if args.force:
-		if os.path.exists(args.outputfilename):
-			print '  Output file :',
-			print args.outputfilename,
-			print 'will be overwritten'
-		else:
-			print '  Force overwrite specified, but',
-			print args.outputfilename,
-			print 'doesn\'t exist.'
-	else:
-		if os.path.exists(args.outputfilename):
-			print '  Output file :',
-			print args.outputfilename,
-			print 'already exists, and no force overwrite set.'
-			return()
+	# Loop through the input, process each line and output.
 
-	# Now open the file and read the IP addresses contained
-	print
 
-	# Create a list of IP addresses in a datablock. This has an empty dict as a placeholder
-	# Use these to get details of the IP address from the IP-API.COM server,
-	# add a locally-resolved rDNS lookup,
-	# output the file
-	import_datablock(args.inputfilename)
-	process_datablock()
-	output_datablock(args.outputfilename)
 
 if __name__ == "__main__":
     main()
