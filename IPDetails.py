@@ -19,7 +19,7 @@ import time
 # Setup global variables
 datablock = {}
 
-def callAPI(http,addr):
+def callAPI(addr,http):
 	http.request("GET","/json/"+addr)
 	try:
 		resp = http.getresponse()
@@ -62,99 +62,82 @@ def splitASdetails(combined,string):
 			name=string
 	return(asn,name)
 
-def import_datablock(filename):
-	with open (filename,"r") as inputhandle:
-		for line in inputhandle:
-			ipAddr = line.strip()
-			# Remove leading 0's from IP address (if they occur)
-			# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
-			ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
-			datablock.update({ipAddr:{}})
-	inputhandle.close()
-
-def process_datablock():
+def process_address(ipAddr,http):
 	# Get connection to the server
-	http = httplib.HTTPConnection('ip-api.com')
-	for ipAddr in datablock:
-			if ipAddr:
+	if ipAddr:
 
-				# Validate we have a proper IP Address
-				print ipAddr,
+		# Validate we have a proper IP Address
+		print ipAddr,
 
-				wu=0
-				wv=''
-				u = {'Label':ipAddr}
-				data={}
+		wu=0
+		wv=''
+		u = {'Id':ipAddr,'Label':ipAddr}
+		data={}
 
-				try:
-					ipa = ipaddress.ip_address(unicode(ipAddr))
+		try:
+			ipa = ipaddress.ip_address(unicode(ipAddr))
 
-					name,alias,addrlist = getrDNS(ipAddr)
-					# If we've got a successful lookup, add it to the data
-					# or use the IP address if not
+			name,alias,addrlist = getrDNS(ipAddr)
+			# If we've got a successful lookup, add it to the data
+			# or use the IP address if not
 
-					if name == None:
-						print
-					else:
-						u = {'Label':name}
-						print name
+			if name == None:
+				print
+			else:
+				u = {'Label':name}
+				print name
 
-					if ipa.is_multicast:
-						if ipa.version==4:
-							wv='RFC3171 Multicast Network'
-						else:
-							wv='RFC2373 Multicast Network'
-					elif ipa.is_loopback:
-						if ipa.version==4:
-							wv='RFC3330 Loopback Network'
-						else:
-							wv='RFC2372 Loopback Network'
-					elif ipa.is_private:
-						wv='RFC1918 Private Network'
-					else:
-						data = callAPI(http,ipAddr)
-						# data now holds API response, split the AS
+			if ipa.is_multicast:
+				if ipa.version==4:
+					wv='RFC3171 Multicast Network'
+				else:
+					wv='RFC2373 Multicast Network'
+			elif ipa.is_loopback:
+				if ipa.version==4:
+					wv='RFC3330 Loopback Network'
+				else:
+					wv='RFC2372 Loopback Network'
+			elif ipa.is_private:
+					wv='RFC1918 Private Network'
+			else:
+				data = callAPI(ipAddr,http)
+				# data now holds API response, split the AS
 
-						if not data.get('as') == "":
-							wu,wv=splitASdetails(data.get('as'),data.get('message'))
-						else:
-							wv = data.get('message')
+				if not data.get('as') == "":
+					wu,wv=splitASdetails(data.get('as'),data.get('message'))
+				else:
+					wv = data.get('message')
 
-						# Don't overload the API server,
-						# wait half a second between iterations
-						time.sleep(.5)
+				# Don't overload the API server,
+				# wait half a second between iterations
+				time.sleep(.5)
 
-					data.update(u)
-					data.update({"AS#":int(wu)})
-					data.update({"ASName":wv})
+			data.update(u)
+			data.update({"AS#":int(wu)})
+			data.update({"ASName":wv})
 
-					# Update the data block with the information for the IP address
-					l={ipAddr:data}
-					datablock.update(l)
+			return data
 
-				except ValueError:
-					print 'Skipping Invalid IP Address'
-					l={ipAddr:'Delete me'}
-					datablock.update(l)
+		except ValueError:
+			print 'Skipping Invalid IP Address'
+			return()
 
-	http.close()
-
-def output_datablock(filename):
+def output_csv_headers(filehandle):
 	# Print the CSV output headers
 	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
 
-	outputfile = open (filename,"wb")
-	writer = csv.writer(outputfile)
-	outputhandle = csv.DictWriter(outputfile, fieldnames=outfields)
-	outputhandle.writeheader()
+	writer = csv.writer(filehandle)
+	csvhandle = csv.DictWriter(filehandle, fieldnames=outfields)
+	csvhandle.writeheader()
+	return(csvhandle)
+
+def output_csv(csvhandle,data):
+	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
 
 	# Now process the JSON data and output as CSV
-	for ipAddr,data in datablock.iteritems():
-		if data != 'Delete me':
-			outrow={"Id":ipAddr}
-			outrow.update(data)
-			outputhandle.writerow(outrow)
-	outputfile.close()
+	outrow={}
+	outrow.update(data)
+	csvhandle.writerow(outrow)
 
 def display_version():
 	print 'IPDetails.py',
@@ -180,7 +163,6 @@ def main():
 	args = parser.parse_args()
 
 	if args.version:
-		# Need to look at moving these to functions so can be changed easily
 		display_version()
 		return()
 
@@ -188,9 +170,22 @@ def main():
 		error_not_implemented()
 		return()
 
+	if args.format=='csv':
+		csvhandle=output_csv_headers(args.outputfilename)
+
+	http = httplib.HTTPConnection('ip-api.com')
+
 	# Loop through the input, process each line and output.
+	for line in args.inputfilename:
+		ipAddr = line.strip()
+		# Remove leading 0's from IP address (if they occur)
+		# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
+		ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 
-
+		data = process_address(ipAddr,http)
+		if args.format=='csv':
+			output_csv(csvhandle,data)
+	http.close()
 
 if __name__ == "__main__":
     main()
