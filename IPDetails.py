@@ -11,6 +11,7 @@ import argparse
 import csv
 import httplib
 import ipaddress
+import json
 import os.path
 import socket
 import sys
@@ -121,7 +122,7 @@ def process_address(ipAddr,http):
 
 		except ValueError:
 			print 'Skipping Invalid IP Address'
-			return()
+			return('**Skip Me**')
 
 def output_csv_headers(filehandle):
 	# Print the CSV output headers
@@ -172,7 +173,8 @@ def main():
 		display_version()
 		return()
 
-	if args.format=='txt' or args.format=='json':
+	if args.format=='txt':
+	#or args.format=='json':
 		error_not_implemented()
 		return()
 
@@ -189,14 +191,15 @@ def main():
 		ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 
 		data = process_address(ipAddr,http)
-		if args.format=='csv':
-			output_csv(csvhandle,data)
-		elif args.format=='json':
-			output_json(args.outputfilehandle)
-		elif args.format=='txt':
-			output_txt(args.outputfilehandle)
-		else:
-			print 'Incorrect file output type selected',args.format
+		if data != '**Skip Me**':
+			if args.format=='csv':
+				output_csv(csvhandle,data)
+			elif args.format=='json':
+				output_json(args.outputfilehandle,data)
+			elif args.format=='txt':
+				output_txt(args.outputfilehandle,data)
+			else:
+				print 'Incorrect file output type selected',args.format
 
 	http.close()
 
