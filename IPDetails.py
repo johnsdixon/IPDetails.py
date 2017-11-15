@@ -133,11 +133,16 @@ def output_csv_headers(filehandle):
 
 def output_csv(csvhandle,data):
 	outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
-
 	# Now process the JSON data and output as CSV
 	outrow={}
 	outrow.update(data)
 	csvhandle.writerow(outrow)
+
+def output_json(filehandle,data):
+	json.dump(data,filehandle)
+
+def output_txt(filehandle,data):
+	filehandle.write(data)
 
 def display_version():
 	print 'IPDetails.py',
@@ -156,8 +161,8 @@ def error_not_implemented():
 
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
-	parser.add_argument('inputfilename',nargs='?',type=argparse.FileType('r'),default=sys.stdin,help='Input filename containing IP Addresses, one per line.')
-	parser.add_argument('outputfilename',nargs='?',type=argparse.FileType('w'),default=sys.stdout,help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
+	parser.add_argument('inputfilehandle',nargs='?',type=argparse.FileType('r'),default=sys.stdin,help='Input filename containing IP Addresses, one per line.')
+	parser.add_argument('outputfilehandle',nargs='?',type=argparse.FileType('w'),default=sys.stdout,help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
 	parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
 	parser.add_argument('-f',dest='format',choices=['txt','csv','json'],help='Output as txt, csv or json format file.',default='csv')
 	args = parser.parse_args()
@@ -171,12 +176,12 @@ def main():
 		return()
 
 	if args.format=='csv':
-		csvhandle=output_csv_headers(args.outputfilename)
+		csvhandle=output_csv_headers(args.outputfilehandle)
 
 	http = httplib.HTTPConnection('ip-api.com')
 
 	# Loop through the input, process each line and output.
-	for line in args.inputfilename:
+	for line in args.inputfilehandle:
 		ipAddr = line.strip()
 		# Remove leading 0's from IP address (if they occur)
 		# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
@@ -185,6 +190,13 @@ def main():
 		data = process_address(ipAddr,http)
 		if args.format=='csv':
 			output_csv(csvhandle,data)
+		elif args.format=='json':
+			output_json(args.outputfilehandle)
+		elif args.format=='txt':
+			output_txt(args.outputfilehandle)
+		else:
+			print 'Incorrect file output type selected',args.format
+
 	http.close()
 
 if __name__ == "__main__":
