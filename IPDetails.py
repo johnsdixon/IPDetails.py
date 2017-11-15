@@ -99,6 +99,7 @@ def process_address(ipAddr,http):
 					wv='RFC2372 Loopback Network'
 			elif ipa.is_private:
 					wv='RFC1918 Private Network'
+					u = {'Label':ipa.reverse_pointer}
 			else:
 				data = callAPI(ipAddr,http)
 				# data now holds API response, split the AS
