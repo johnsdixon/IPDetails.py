@@ -8,7 +8,7 @@ against the information via the IP-API.COM website, and adds a reverse DNS looku
 Originally created to write a file in a CSV format suitable for importing into
 other tools such as GEPHI as a Nodes table, so more data would be available to cluster on.
 
-# usage: IPDetails.py [-h]  [-v] [-f {txt,csv,json}] [-d]
+usage: IPDetails.py [-h] [-v] [-f {txt [-d],csv,json}]
                     [-a ADDRESS] | [inputfilehandle] [outputfilehandle]
 
 Collect details about an IP address using the IP-API.COM database
@@ -28,7 +28,12 @@ optional arguments:
 Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.
 
 # Examples:
-Lookup a specific IP address: *IPDetails.py -a A.B.C.D*
-Lookup a file full of IP addresses and output as .CSV: *IPDetails.py inputfile.txt outputfile.txt -f csv*
-Lookup from the CLI continuously: *IPDetails.py*
+Lookup a specific IP address:
+IPDetails.py -a A.B.C.D
+
+Lookup a file full of IP addresses and output as .CSV:
+IPDetails.py inputfile.txt outputfile.csv -f csv
+
+Lookup from the CLI continuously:
+IPDetails.py
 
