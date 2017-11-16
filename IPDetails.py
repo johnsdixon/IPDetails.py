@@ -122,7 +122,6 @@ def process_address(ipAddr,http):
 			return data
 
 		except ValueError:
-			print 'Skipping Invalid IP Address'
 			return('**Skip Me**')
 
 def output_csv_headers(filehandle):
@@ -147,9 +146,16 @@ def output_json(filehandle,data):
 def output_txt(filehandle,data,density):
 	output_line=''
 	if density:
-		output_line = output_line+'Id:\t'+str(data.get('Id'))+'\t'+str(data.get('Label'))
+		output_line = output_line+'IP:\t'+str(data.get('Id'))+'\t'+str(data.get('Label'))+'\n'
+		output_line = output_line+'Geo:\t'+str(data.get('countryCode'))+' '+str(data.get('country'))+' '+str(data.get('city'))+'\n'
+		output_line = output_line+'Lat:\t'+str(data.get('lat'))+'\tLong:\t'+str(data.get('lon'))+'\tTZ:\t'+str(data.get('timezone'))+'\n'
+		output_line = output_line+'AS#:\t'+str(data.get('AS#'))+' '+str(data.get('ASName'))+' '+str(data.get('isp'))+' '+str(data.get('org'))+'\n\n'
 	else:
-		output_line = output_line+'Id:\t'+str(data.get('Id'))+' ('+str(data.get('Label'))+')\n'
+		output_line = output_line+'IP:'+str(data.get('Id'))
+		output_line = output_line+' Geo:'+str(data.get('countryCode'))
+		output_line = output_line+' AS#:'+str(data.get('AS#'))
+		output_line = output_line+' AS:'+str(data.get('ASName'))
+		output_line = output_line+' ('+str(data.get('Label'))+')\n'
 	filehandle.write(output_line)
 
 def display_version():
@@ -163,10 +169,11 @@ def display_version():
 
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
+	parser.add_argument('-a',dest='address',help='IP Address to lookup')
 	parser.add_argument('inputfilehandle',nargs='?',type=argparse.FileType('r'),default=sys.stdin,help='Input filename containing IP Addresses, one per line.')
 	parser.add_argument('outputfilehandle',nargs='?',type=argparse.FileType('w'),default=sys.stdout,help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
 	parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
-	parser.add_argument('-f',dest='format',choices=['txt','csv','json'],help='Output as txt, csv or json format file.',default='csv')
+	parser.add_argument('-f',dest='format',choices=['txt','csv','json'],help='Output as txt, csv or json format file.',default='txt')
 	parser.add_argument('-d',dest='detail',help='Set detailed level of text output',action='store_true')
 	args = parser.parse_args()
 
@@ -179,23 +186,37 @@ def main():
 
 	http = httplib.HTTPConnection('ip-api.com')
 
-	# Loop through the input, process each line and output.
-	for line in args.inputfilehandle:
-		ipAddr = line.strip()
-		# Remove leading 0's from IP address (if they occur)
-		# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
+	if args.address!=None:
+		# We have a single address to lookup, so let's open stdout to write, and process it
+		outputfilehandle=sys.stdout
+		outputfilehandle.write('Looking up address:\n')
+		ipAddr = args.address.strip()
 		ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
-
 		data = process_address(ipAddr,http)
 		if data != '**Skip Me**':
-			if args.format=='csv':
-				output_csv(csvhandle,data)
-			elif args.format=='json':
-				output_json(args.outputfilehandle,data)
-			elif args.format=='txt':
-				output_txt(args.outputfilehandle,data,args.detail)
+			output_txt(outputfilehandle,data,True)
+		else:
+			outputfilehandle.write('\nInvalid IP address? Check and try again.\n')
+	else:
+		# Loop through the input, process each line and output.
+		for line in args.inputfilehandle:
+			ipAddr = line.strip()
+			# Remove leading 0's from IP address (if they occur)
+			# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
+			ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
+
+			data = process_address(ipAddr,http)
+			if data != '**Skip Me**':
+				if args.format=='csv':
+					output_csv(csvhandle,data)
+				elif args.format=='json':
+					output_json(args.outputfilehandle,data)
+				elif args.format=='txt':
+					output_txt(args.outputfilehandle,data,args.detail)
+				else:
+					print 'Incorrect file output type selected',args.format
 			else:
-				print 'Incorrect file output type selected',args.format
+				print 'Skipping invalid IP address'
 
 	http.close()
 
