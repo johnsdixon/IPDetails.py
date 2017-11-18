@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 #
@@ -70,7 +70,7 @@ def process_address(ipAddr,http):
 
 		# Validate we have a proper IP Address
 		if statusupdates:
-			print ipAddr,
+			print (ipAddr),
 
 		wu=0
 		wv=''
@@ -117,7 +117,7 @@ def process_address(ipAddr,http):
 			else:
 				u = {'Label':name}
 				if statusupdates:
-					print name
+					print (name)
 
 			data.update(u)
 			data.update({"AS#":int(wu)})
@@ -163,13 +163,13 @@ def output_txt(filehandle,data,density):
 	filehandle.write(output_line)
 
 def display_version():
-	print 'IPDetails.py',
-	print '0.9d-20171115'
-	print
-	print 'IPDetails.py',
-	print 'is a program for finding details about an IP address.'
-	print 'The input is read from a file or stdin.'
-	print 'Output is to stdout, or to a file. Formatting can be set as an option'
+	print('IPDetails.py'),
+	print('0.9d-20171115')
+	print()
+	print('IPDetails.py'),
+	print('is a program for finding details about an IP address.')
+	print('The input is read from a file or stdin.')
+	print('Output is to stdout, or to a file. Formatting can be set as an option')
 
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
@@ -220,9 +220,9 @@ def main():
 				elif args.format=='txt':
 					output_txt(args.outputfilehandle,data,args.detail)
 				else:
-					print 'Incorrect file output type selected',args.format
+					print('Incorrect file output type selected',args.format)
 			else:
-				print 'Skipping invalid IP address'
+				print('Skipping invalid IP address')
 
 	http.close()
 
