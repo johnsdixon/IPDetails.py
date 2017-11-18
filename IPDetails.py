@@ -19,6 +19,7 @@ import time
 
 # Setup global variables
 datablock = {}
+statusupdates = False
 
 def callAPI(addr,http):
 	http.request("GET","/json/"+addr)
@@ -68,7 +69,8 @@ def process_address(ipAddr,http):
 	if ipAddr:
 
 		# Validate we have a proper IP Address
-		print ipAddr,
+		if statusupdates:
+			print ipAddr,
 
 		wu=0
 		wv=''
@@ -110,10 +112,12 @@ def process_address(ipAddr,http):
 			# or use the IP address if not
 
 			if name == None:
-				print
+				if statusupdates:
+					print
 			else:
 				u = {'Label':name}
-				print name
+				if statusupdates:
+					print name
 
 			data.update(u)
 			data.update({"AS#":int(wu)})
@@ -189,16 +193,18 @@ def main():
 	if args.address!=None:
 		# We have a single address to lookup, so let's open stdout to write, and process it
 		outputfilehandle=sys.stdout
-		outputfilehandle.write('Looking up address:\n')
+		outputfilehandle.write('Looking up address:\t')
 		ipAddr = args.address.strip()
 		ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 		data = process_address(ipAddr,http)
+		outputfilehandle.write(ipAddr+'\n\n')
 		if data != '**Skip Me**':
 			output_txt(outputfilehandle,data,True)
 		else:
 			outputfilehandle.write('\nInvalid IP address? Check and try again.\n')
 	else:
 		# Loop through the input, process each line and output.
+		statusupdates = True
 		for line in args.inputfilehandle:
 			ipAddr = line.strip()
 			# Remove leading 0's from IP address (if they occur)
