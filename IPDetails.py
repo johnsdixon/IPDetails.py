@@ -9,7 +9,7 @@
 from ast import literal_eval
 import argparse
 import csv
-import httplib
+import http.client
 import ipaddress
 import json
 import os.path
@@ -29,7 +29,7 @@ def callAPI(addr,http):
 	except httplib.BadStatusLine:
 		# Close and reopen HTTP connection
 		http.close()
-		http = httplib.HTTPConnection('ip-api.com')
+		http = http.client.HTTPConnection('ip-api.com')
 		http.request("GET","/json/"+addr)
 		resp = http.getresponse()
 
@@ -165,7 +165,7 @@ def output_txt(filehandle,data,density):
 def display_version():
 	print('IPDetails.py'),
 	print('0.9d-20171115')
-	print()
+	print
 	print('IPDetails.py'),
 	print('is a program for finding details about an IP address.')
 	print('The input is read from a file or stdin.')
@@ -188,7 +188,7 @@ def main():
 	if args.format=='csv':
 		csvhandle=output_csv_headers(args.outputfilehandle)
 
-	http = httplib.HTTPConnection('ip-api.com')
+	httpconn = http.client.HTTPConnection('ip-api.com')
 
 	if args.address!=None:
 		# We have a single address to lookup, so let's open stdout to write, and process it
@@ -196,7 +196,7 @@ def main():
 		outputfilehandle.write('Looking up address:\t')
 		ipAddr = args.address.strip()
 		ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
-		data = process_address(ipAddr,http)
+		data = process_address(ipAddr,httpconn)
 		outputfilehandle.write(ipAddr+'\n\n')
 		if data != '**Skip Me**':
 			output_txt(outputfilehandle,data,True)
@@ -211,7 +211,7 @@ def main():
 			# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
 			ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 
-			data = process_address(ipAddr,http)
+			data = process_address(ipAddr,httpconn)
 			if data != '**Skip Me**':
 				if args.format=='csv':
 					output_csv(csvhandle,data)
@@ -224,7 +224,7 @@ def main():
 			else:
 				print('Skipping invalid IP address')
 
-	http.close()
+	httpconn.close()
 
 if __name__ == "__main__":
     main()
