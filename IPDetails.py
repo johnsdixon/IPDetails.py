@@ -78,7 +78,7 @@ def process_address(ipAddr,http):
 		data={'Id':ipAddr}
 
 		try:
-			ipa = ipaddress.ip_address(unicode(ipAddr))
+			ipa = ipaddress.ip_address(ipAddr)
 
 			if ipa.is_multicast:
 				if ipa.version==4:
