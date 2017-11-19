@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 #
@@ -9,7 +9,7 @@
 from ast import literal_eval
 import argparse
 import csv
-import httplib
+import http.client
 import ipaddress
 import json
 import os.path
@@ -19,6 +19,7 @@ import time
 
 # Setup global variables
 datablock = {}
+statusupdates = False
 
 def callAPI(addr,http):
 	http.request("GET","/json/"+addr)
@@ -28,7 +29,7 @@ def callAPI(addr,http):
 	except httplib.BadStatusLine:
 		# Close and reopen HTTP connection
 		http.close()
-		http = httplib.HTTPConnection('ip-api.com')
+		http = http.client.HTTPConnection('ip-api.com')
 		http.request("GET","/json/"+addr)
 		resp = http.getresponse()
 
@@ -68,7 +69,8 @@ def process_address(ipAddr,http):
 	if ipAddr:
 
 		# Validate we have a proper IP Address
-		print ipAddr,
+		if statusupdates:
+			print (ipAddr),
 
 		wu=0
 		wv=''
@@ -76,7 +78,7 @@ def process_address(ipAddr,http):
 		data={'Id':ipAddr}
 
 		try:
-			ipa = ipaddress.ip_address(unicode(ipAddr))
+			ipa = ipaddress.ip_address(ipAddr)
 
 			if ipa.is_multicast:
 				if ipa.version==4:
@@ -110,10 +112,12 @@ def process_address(ipAddr,http):
 			# or use the IP address if not
 
 			if name == None:
-				print
+				if statusupdates:
+					print
 			else:
 				u = {'Label':name}
-				print name
+				if statusupdates:
+					print (name)
 
 			data.update(u)
 			data.update({"AS#":int(wu)})
@@ -159,13 +163,13 @@ def output_txt(filehandle,data,density):
 	filehandle.write(output_line)
 
 def display_version():
-	print 'IPDetails.py',
-	print '1.0a-20171119'
+	print('IPDetails.py'),
+	print('0.9d-20171115')
 	print
-	print 'IPDetails.py',
-	print 'is a program for finding details about an IP address.'
-	print 'The input is read from a file or stdin.'
-	print 'Output is to stdout, or to a file. Formatting can be set as an option'
+	print('IPDetails.py'),
+	print('is a program for finding details about an IP address.')
+	print('The input is read from a file or stdin.')
+	print('Output is to stdout, or to a file. Formatting can be set as an option')
 
 def main():
 	parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
@@ -184,28 +188,30 @@ def main():
 	if args.format=='csv':
 		csvhandle=output_csv_headers(args.outputfilehandle)
 
-	http = httplib.HTTPConnection('ip-api.com')
+	httpconn = http.client.HTTPConnection('ip-api.com')
 
 	if args.address!=None:
 		# We have a single address to lookup, so let's open stdout to write, and process it
 		outputfilehandle=sys.stdout
-		outputfilehandle.write('Looking up address:\n')
+		outputfilehandle.write('Looking up address:\t')
 		ipAddr = args.address.strip()
 		ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
-		data = process_address(ipAddr,http)
+		data = process_address(ipAddr,httpconn)
+		outputfilehandle.write(ipAddr+'\n\n')
 		if data != '**Skip Me**':
 			output_txt(outputfilehandle,data,True)
 		else:
 			outputfilehandle.write('\nInvalid IP address? Check and try again.\n')
 	else:
 		# Loop through the input, process each line and output.
+		statusupdates = True
 		for line in args.inputfilehandle:
 			ipAddr = line.strip()
 			# Remove leading 0's from IP address (if they occur)
 			# Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
 			ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 
-			data = process_address(ipAddr,http)
+			data = process_address(ipAddr,httpconn)
 			if data != '**Skip Me**':
 				if args.format=='csv':
 					output_csv(csvhandle,data)
@@ -214,11 +220,11 @@ def main():
 				elif args.format=='txt':
 					output_txt(args.outputfilehandle,data,args.detail)
 				else:
-					print 'Incorrect file output type selected',args.format
+					print('Incorrect file output type selected',args.format)
 			else:
-				print 'Skipping invalid IP address'
+				print('Skipping invalid IP address')
 
-	http.close()
+	httpconn.close()
 
 if __name__ == "__main__":
     main()
