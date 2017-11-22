@@ -92,7 +92,8 @@ def process_address(ipAddr,http):
 					wv='RFC2372 Loopback Network'
 			elif ipa.is_private:
 					wv='RFC1918 Private Network'
-					u = {'Label':ipa.reverse_pointer}
+					if sys.version[0]==3 and sys.version[1]>5:
+						u = {'Label':ipa.reverse_pointer}
 			else:
 				detail = callAPI(ipAddr,http)
 				data.update(detail)
