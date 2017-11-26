@@ -179,7 +179,7 @@ def output_txt(filehandle,data,density):
 
 def display_version():
 	print('IPDetails.py'),
-	print('1.0-20171119')
+	print('1.1-20171126')
 	print
 	print('IPDetails.py'),
 	print('is a program for finding details about an IP address.')
