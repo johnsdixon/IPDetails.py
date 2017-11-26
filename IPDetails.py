@@ -91,9 +91,23 @@ def process_address(ipAddr,http):
 				else:
 					wv='RFC2372 Loopback Network'
 			elif ipa.is_private:
-					wv='RFC1918 Private Network'
 					if sys.version[0]==3 and sys.version[1]>5:
+						if ipa.version==4:
+							wv='RFC1918 Private Network'
+						else:
+							wv='RFC4193 Unique Local Address'
 						u = {'Label':ipa.reverse_pointer}
+					else:
+						if ipa.version==4:
+							wv='RFC1918 Private Network'
+							reverse_octets = str(ipa).split('.')[::-1]
+							reverse_pointer = '.'.join(reverse_octets) + '.in-addr.arpa'
+							u = {'Label':reverse_pointer}
+						else:
+							wv='RFC4193 Unique Local Address'
+							reverse_chars = ipa.exploded[::-1].replace(':', '')
+							reverse_pointer = '.'.join(reverse_chars) + '.ip6.arpa'
+							u = {'Label':reverse_pointer}
 			else:
 				detail = callAPI(ipAddr,http)
 				data.update(detail)
