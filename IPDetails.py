@@ -49,19 +49,19 @@ def splitASdetails(combined, string):
     # the as field from the API.
     if not combined == None:
         if not combined == "":
-            temp=combined.split(" ", 1)
-            asn=temp[0]
-            name=temp[1]
+            temp = combined.split(" ", 1)
+            asn = temp[0]
+            name = temp[1]
 
         # Check we're not dealing with a quoted string
         if asn[0] == '"':
-            asn=asn[3:]
-            name=name[0:-1]
+            asn = asn[3:]
+            name = name[0:-1]
         else:
-            asn=asn[2:]
+            asn = asn[2:]
     else:
-            asn=0
-            name=string
+            asn = 0
+            name = string
     return(asn, name)
 
 def process_address(ipAddr, http):
@@ -72,39 +72,39 @@ def process_address(ipAddr, http):
         if statusupdates:
             print (ipAddr),
 
-        wu=0
-        wv=''
+        wu = 0
+        wv = ''
         u = {'Label':ipAddr}
-        data={'Id':ipAddr}
+        data = {'Id':ipAddr}
 
         try:
             ipa = ipaddress.ip_address(ipAddr)
 
             if ipa.is_multicast:
                 if ipa.version == 4:
-                    wv='RFC3171 Multicast Network'
+                    wv = 'RFC3171 Multicast Network'
                 else:
-                    wv='RFC2373 Multicast Network'
+                    wv = 'RFC2373 Multicast Network'
             elif ipa.is_loopback:
                 if ipa.version == 4:
-                    wv='RFC3330 Loopback Network'
+                    wv = 'RFC3330 Loopback Network'
                 else:
-                    wv='RFC2372 Loopback Network'
+                    wv = 'RFC2372 Loopback Network'
             elif ipa.is_private:
                     if sys.version[0] == 3 and sys.version[1]>5:
                         if ipa.version == 4:
-                            wv='RFC1918 Private Network'
+                            wv = 'RFC1918 Private Network'
                         else:
-                            wv='RFC4193 Unique Local Address'
+                            wv = 'RFC4193 Unique Local Address'
                         u = {'Label':ipa.reverse_pointer}
                     else:
                         if ipa.version == 4:
-                            wv='RFC1918 Private Network'
+                            wv = 'RFC1918 Private Network'
                             reverse_octets = str(ipa).split('.')[::-1]
                             reverse_pointer = '.'.join(reverse_octets) + '.in-addr.arpa'
                             u = {'Label':reverse_pointer}
                         else:
-                            wv='RFC4193 Unique Local Address'
+                            wv = 'RFC4193 Unique Local Address'
                             reverse_chars = ipa.exploded[::-1].replace(':', '')
                             reverse_pointer = '.'.join(reverse_chars) + '.ip6.arpa'
                             u = {'Label':reverse_pointer}
@@ -114,7 +114,7 @@ def process_address(ipAddr, http):
                 # data now holds API response, split the AS
 
                 if not data.get('as') == "":
-                    wu, wv=splitASdetails(data.get('as'), data.get('message'))
+                    wu, wv = splitASdetails(data.get('as'), data.get('message'))
                 else:
                     wv = data.get('message')
 
@@ -148,14 +148,14 @@ def output_csv_headers(filehandle):
     outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org', 'status', 'countryCode', 'country', 'region', 'regionName', 'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
 
     writer = csv.writer(filehandle)
-    csvhandle = csv.DictWriter(filehandle, fieldnames=outfields)
+    csvhandle = csv.DictWriter(filehandle, fieldnames = outfields)
     csvhandle.writeheader()
     return(csvhandle)
 
 def output_csv(csvhandle, data):
     outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org', 'status', 'countryCode', 'country', 'region', 'regionName', 'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
     # Now process the JSON data and output as CSV
-    outrow={}
+    outrow = {}
     outrow.update(data)
     csvhandle.writerow(outrow)
 
@@ -163,7 +163,7 @@ def output_json(filehandle, data):
     json.dump(data, filehandle)
 
 def output_txt(filehandle, data, density):
-    output_line=''
+    output_line = ''
     if density:
         output_line = output_line+'IP:\t'+str(data.get('Id'))+'\t'+str(data.get('Label'))+'\n'
         output_line = output_line+'Geo:\t'+str(data.get('countryCode'))+' '+str(data.get('country'))+' '+str(data.get('city'))+'\n'
@@ -187,13 +187,13 @@ def display_version():
     print('Output is to stdout, or to a file. Formatting can be set as an option')
 
 def main():
-    parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database', epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
-    parser.add_argument('-a', dest='address', help='IP Address to lookup')
-    parser.add_argument('inputfilehandle', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help='Input filename containing IP Addresses, one per line.')
-    parser.add_argument('outputfilehandle', nargs='?', type=argparse.FileType('w'), default=sys.stdout, help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
-    parser.add_argument('-v', dest='version', help='Display the software verison', action='store_true')
-    parser.add_argument('-f', dest='format', choices=['txt', 'csv', 'json'], help='Output as txt, csv or json format file.', default='txt')
-    parser.add_argument('-d', dest='detail', help='Set detailed level of text output', action='store_true')
+    parser = argparse.ArgumentParser(prog = 'IPDetails.py', description = 'Collect details about an IP address using the IP-API.COM database', epilog = 'Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
+    parser.add_argument('-a', dest = 'address', help = 'IP Address to lookup')
+    parser.add_argument('inputfilehandle', nargs = '?', type = argparse.FileType('r'), default = sys.stdin, help = 'Input filename containing IP Addresses, one per line.')
+    parser.add_argument('outputfilehandle', nargs = '?', type = argparse.FileType('w'), default = sys.stdout, help = 'Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
+    parser.add_argument('-v', dest = 'version', help = 'Display the software verison', action = 'store_true')
+    parser.add_argument('-f', dest = 'format', choices = ['txt', 'csv', 'json'], help = 'Output as txt, csv or json format file.', default = 'txt')
+    parser.add_argument('-d', dest = 'detail', help = 'Set detailed level of text output', action = 'store_true')
     args = parser.parse_args()
 
     if args.version:
@@ -201,13 +201,13 @@ def main():
         return()
 
     if args.format == 'csv':
-        csvhandle=output_csv_headers(args.outputfilehandle)
+        csvhandle = output_csv_headers(args.outputfilehandle)
 
     httpconn = http.client.HTTPConnection('ip-api.com')
 
-    if args.address!=None:
+    if args.address != None:
         # We have a single address to lookup, so let's open stdout to write, and process it
-        outputfilehandle=sys.stdout
+        outputfilehandle = sys.stdout
         outputfilehandle.write('Looking up address:\t')
         ipAddr = args.address.strip()
         ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
