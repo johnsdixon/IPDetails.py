@@ -35,14 +35,14 @@ def callAPI(addr, http):
 
     # remove unicode characters in some of the returned text
     data = literal_eval(resp.read().decode('utf-8', 'replace'))
-    return (data)
+    return(data)
 
 def getrDNS(addr):
     try:
         name, alias, addrlist = socket.gethostbyaddr(addr)
     except socket.herror:
         name, alias, addrlist = None, None, None
-    return (name, alias, addrlist)
+    return(name, alias, addrlist)
 
 def splitASdetails(combined, string):
     # In this block we need to look at spliting out the AS# and ASName from
@@ -70,7 +70,7 @@ def process_address(ipAddr, http):
 
         # Validate we have a proper IP Address
         if statusupdates:
-            print (ipAddr),
+            print(ipAddr),
 
         wu = 0
         wv = ''
@@ -132,7 +132,7 @@ def process_address(ipAddr, http):
             else:
                 u = {'Label':name}
                 if statusupdates:
-                    print (name)
+                    print(name)
 
             data.update(u)
             data.update({"AS#":int(wu)})
@@ -174,7 +174,7 @@ def output_txt(filehandle, data, density):
         output_line = output_line+' Geo:'+str(data.get('countryCode'))
         output_line = output_line+' AS#:'+str(data.get('AS#'))
         output_line = output_line+' AS:'+str(data.get('ASName'))
-        output_line = output_line+' ('+str(data.get('Label'))+')\n'
+        output_line = output_line+'('+str(data.get('Label'))+')\n'
     filehandle.write(output_line)
 
 def display_version():
@@ -187,7 +187,7 @@ def display_version():
     print('Output is to stdout, or to a file. Formatting can be set as an option')
 
 def main():
-    parser = argparse.ArgumentParser(prog = 'IPDetails.py', description = 'Collect details about an IP address using the IP-API.COM database', epilog = 'Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
+    parser = argparse.ArgumentParser(prog = 'IPDetails.py', description = 'Collect details about an IP address using the IP-API.COM database', epilog = 'Licensed under GPL-3.0(c) Copyright 2017 John S. Dixon.')
     parser.add_argument('-a', dest = 'address', help = 'IP Address to lookup')
     parser.add_argument('inputfilehandle', nargs = '?', type = argparse.FileType('r'), default = sys.stdin, help = 'Input filename containing IP Addresses, one per line.')
     parser.add_argument('outputfilehandle', nargs = '?', type = argparse.FileType('w'), default = sys.stdout, help = 'Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
@@ -222,7 +222,7 @@ def main():
         statusupdates = True
         for line in args.inputfilehandle:
             ipAddr = line.strip()
-            # Remove leading 0's from IP address (if they occur)
+            # Remove leading 0's from IP address(if they occur)
             # Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
             ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 
