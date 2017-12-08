@@ -12,7 +12,6 @@ import csv
 import http.client
 import ipaddress
 import json
-import os.path
 import socket
 import sys
 import time
