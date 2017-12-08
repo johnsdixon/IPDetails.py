@@ -35,7 +35,7 @@ def callAPI(addr, http):
 
     # remove unicode characters in some of the returned text
     data = literal_eval(resp.read().decode('utf-8', 'replace'))
-    return(data)
+    return data
 
 def getrDNS(addr):
     try:
@@ -141,7 +141,7 @@ def process_address(ipAddr, http):
             return data
 
         except ValueError:
-            return('**Skip Me**')
+            return '**Skip Me**'
 
 def output_csv_headers(filehandle):
     # Print the CSV output headers
@@ -150,7 +150,7 @@ def output_csv_headers(filehandle):
     writer = csv.writer(filehandle)
     csvhandle = csv.DictWriter(filehandle, fieldnames = outfields)
     csvhandle.writeheader()
-    return(csvhandle)
+    return csvhandle
 
 def output_csv(csvhandle, data):
     outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org', 'status', 'countryCode', 'country', 'region', 'regionName', 'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
