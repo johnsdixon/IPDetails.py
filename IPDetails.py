@@ -200,17 +200,23 @@ def display_version():
     print('Output is to stdout, or to a file. Formatting can be set as an option')
 
 def main():
+    desc = 'Collect details about an IP address using the IP-API.COM database'
+    license = 'Licensed under GPL-3.0(c) Copyright 2017 John S. Dixon.'
     parser = argparse.ArgumentParser(prog='IPDetails.py',
-                                     description='Collect details about an IP address using the IP-API.COM database',
-                                     epilog='Licensed under GPL-3.0(c) Copyright 2017 John S. Dixon.')
+                                     description=desc,
+                                     epilog=license)
     parser.add_argument('-a', dest='address',
                         help='IP Address to lookup')
+    helper = 'Input filename containing IP Addresses, one per line.'
     parser.add_argument('inputfilehandle', nargs='?',
                         type=argparse.FileType('r'), default=sys.stdin,
-                        help='Input filename containing IP Addresses, one per line.')
+                        help=helper)
+    helper = ('Output filename containing IP Address, ASN, ISP, GeoIP '
+              'and other information.'
+             )
     parser.add_argument('outputfilehandle', nargs='?',
                         type=argparse.FileType('w'), default=sys.stdout,
-                        help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
+                        help=helper)
     parser.add_argument('-v', dest='version',
                         help='Display the software verison', action='store_true')
     parser.add_argument('-f', dest='format', choices=['txt', 'csv', 'json'],
@@ -247,7 +253,9 @@ def main():
         for line in args.inputfilehandle:
             ipAddr = line.strip()
             # Remove leading 0's from IP address(if they occur)
-            # Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
+            # Courtesy of
+            # https://stackoverflow.com/questions/44852721/
+            #   remove-leading-zeros-in-ip-address-using-python/44852779
             ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 
             data = process_address(ipAddr, httpconn)
