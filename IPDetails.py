@@ -21,8 +21,8 @@ import time
 datablock = {}
 statusupdates = False
 
-def callAPI(addr,http):
-    http.request("GET","/json/"+addr)
+def callAPI(addr, http):
+    http.request("GET", "/json/"+addr)
     try:
         resp = http.getresponse()
 
@@ -30,26 +30,26 @@ def callAPI(addr,http):
         # Close and reopen HTTP connection
         http.close()
         http = http.client.HTTPConnection('ip-api.com')
-        http.request("GET","/json/"+addr)
+        http.request("GET", "/json/"+addr)
         resp = http.getresponse()
 
     # remove unicode characters in some of the returned text
-    data = literal_eval(resp.read().decode('utf-8','replace'))
+    data = literal_eval(resp.read().decode('utf-8', 'replace'))
     return (data)
 
 def getrDNS(addr):
     try:
-        name,alias,addrlist = socket.gethostbyaddr(addr)
+        name, alias, addrlist = socket.gethostbyaddr(addr)
     except socket.herror:
-        name,alias,addrlist = None, None, None
-    return (name,alias,addrlist)
+        name, alias, addrlist = None, None, None
+    return (name, alias, addrlist)
 
-def splitASdetails(combined,string):
+def splitASdetails(combined, string):
     # In this block we need to look at spliting out the AS# and ASName from
     # the as field from the API.
     if not combined==None:
         if not combined=="":
-            temp=combined.split(" ",1)
+            temp=combined.split(" ", 1)
             asn=temp[0]
             name=temp[1]
 
@@ -62,9 +62,9 @@ def splitASdetails(combined,string):
     else:
             asn=0
             name=string
-    return(asn,name)
+    return(asn, name)
 
-def process_address(ipAddr,http):
+def process_address(ipAddr, http):
     # Get connection to the server
     if ipAddr:
 
@@ -109,12 +109,12 @@ def process_address(ipAddr,http):
                             reverse_pointer = '.'.join(reverse_chars) + '.ip6.arpa'
                             u = {'Label':reverse_pointer}
             else:
-                detail = callAPI(ipAddr,http)
+                detail = callAPI(ipAddr, http)
                 data.update(detail)
                 # data now holds API response, split the AS
 
                 if not data.get('as') == "":
-                    wu,wv=splitASdetails(data.get('as'),data.get('message'))
+                    wu, wv=splitASdetails(data.get('as'), data.get('message'))
                 else:
                     wv = data.get('message')
 
@@ -122,7 +122,7 @@ def process_address(ipAddr,http):
                 # wait half a second between iterations
                 time.sleep(.5)
 
-            name,alias,addrlist = getrDNS(ipAddr)
+            name, alias, addrlist = getrDNS(ipAddr)
             # If we've got a successful lookup, add it to the data
             # or use the IP address if not
 
@@ -145,24 +145,24 @@ def process_address(ipAddr,http):
 
 def output_csv_headers(filehandle):
     # Print the CSV output headers
-    outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
+    outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org', 'status', 'countryCode', 'country', 'region', 'regionName', 'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
 
     writer = csv.writer(filehandle)
     csvhandle = csv.DictWriter(filehandle, fieldnames=outfields)
     csvhandle.writeheader()
     return(csvhandle)
 
-def output_csv(csvhandle,data):
-    outfields = ['Id','Label','AS#','ASName','as','isp','org','status','countryCode','country','region','regionName','city','zip','lat','lon','timezone','message','query']
+def output_csv(csvhandle, data):
+    outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org', 'status', 'countryCode', 'country', 'region', 'regionName', 'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
     # Now process the JSON data and output as CSV
     outrow={}
     outrow.update(data)
     csvhandle.writerow(outrow)
 
-def output_json(filehandle,data):
-    json.dump(data,filehandle)
+def output_json(filehandle, data):
+    json.dump(data, filehandle)
 
-def output_txt(filehandle,data,density):
+def output_txt(filehandle, data, density):
     output_line=''
     if density:
         output_line = output_line+'IP:\t'+str(data.get('Id'))+'\t'+str(data.get('Label'))+'\n'
@@ -187,13 +187,13 @@ def display_version():
     print('Output is to stdout, or to a file. Formatting can be set as an option')
 
 def main():
-    parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database',epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
-    parser.add_argument('-a',dest='address',help='IP Address to lookup')
-    parser.add_argument('inputfilehandle',nargs='?',type=argparse.FileType('r'),default=sys.stdin,help='Input filename containing IP Addresses, one per line.')
-    parser.add_argument('outputfilehandle',nargs='?',type=argparse.FileType('w'),default=sys.stdout,help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
-    parser.add_argument('-v',dest='version',help='Display the software verison',action='store_true')
-    parser.add_argument('-f',dest='format',choices=['txt','csv','json'],help='Output as txt, csv or json format file.',default='txt')
-    parser.add_argument('-d',dest='detail',help='Set detailed level of text output',action='store_true')
+    parser = argparse.ArgumentParser(prog='IPDetails.py', description='Collect details about an IP address using the IP-API.COM database', epilog='Licensed under GPL-3.0 (c) Copyright 2017 John S. Dixon.')
+    parser.add_argument('-a', dest='address', help='IP Address to lookup')
+    parser.add_argument('inputfilehandle', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help='Input filename containing IP Addresses, one per line.')
+    parser.add_argument('outputfilehandle', nargs='?', type=argparse.FileType('w'), default=sys.stdout, help='Output filename containing IP Address, ASN, ISP, GeoIP and other information.')
+    parser.add_argument('-v', dest='version', help='Display the software verison', action='store_true')
+    parser.add_argument('-f', dest='format', choices=['txt', 'csv', 'json'], help='Output as txt, csv or json format file.', default='txt')
+    parser.add_argument('-d', dest='detail', help='Set detailed level of text output', action='store_true')
     args = parser.parse_args()
 
     if args.version:
@@ -211,10 +211,10 @@ def main():
         outputfilehandle.write('Looking up address:\t')
         ipAddr = args.address.strip()
         ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
-        data = process_address(ipAddr,httpconn)
+        data = process_address(ipAddr, httpconn)
         outputfilehandle.write(ipAddr+'\n\n')
         if data != '**Skip Me**':
-            output_txt(outputfilehandle,data,True)
+            output_txt(outputfilehandle, data, True)
         else:
             outputfilehandle.write('\nInvalid IP address? Check and try again.\n')
     else:
@@ -226,16 +226,16 @@ def main():
             # Courtesy of https://stackoverflow.com/questions/44852721/remove-leading-zeros-in-ip-address-using-python/44852779
             ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
 
-            data = process_address(ipAddr,httpconn)
+            data = process_address(ipAddr, httpconn)
             if data != '**Skip Me**':
                 if args.format=='csv':
-                    output_csv(csvhandle,data)
+                    output_csv(csvhandle, data)
                 elif args.format=='json':
-                    output_json(args.outputfilehandle,data)
+                    output_json(args.outputfilehandle, data)
                 elif args.format=='txt':
-                    output_txt(args.outputfilehandle,data,args.detail)
+                    output_txt(args.outputfilehandle, data, args.detail)
                 else:
-                    print('Incorrect file output type selected',args.format)
+                    print('Incorrect file output type selected', args.format)
             else:
                 print('Skipping invalid IP address')
 
