@@ -21,7 +21,7 @@ datablock = {}
 statusupdates = False
 
 def callAPI(addr, http):
-    http.request("GET", "/json/"+addr)
+    http.request("GET", "/json/" + addr)
     try:
         resp = http.getresponse()
 
@@ -29,7 +29,7 @@ def callAPI(addr, http):
         # Close and reopen HTTP connection
         http.close()
         http = http.client.HTTPConnection('ip-api.com')
-        http.request("GET", "/json/"+addr)
+        http.request("GET", "/json/" + addr)
         resp = http.getresponse()
 
     # remove unicode characters in some of the returned text
@@ -168,16 +168,16 @@ def output_json(filehandle, data):
 def output_txt(filehandle, data, density):
     output_line = ''
     if density:
-        output_line = output_line+'IP:\t'+str(data.get('Id'))+'\t'+str(data.get('Label'))+'\n'
-        output_line = output_line+'Geo:\t'+str(data.get('countryCode'))+' '+str(data.get('country'))+' '+str(data.get('city'))+'\n'
-        output_line = output_line+'Lat:\t'+str(data.get('lat'))+'\tLong:\t'+str(data.get('lon'))+'\tTZ:\t'+str(data.get('timezone'))+'\n'
-        output_line = output_line+'AS#:\t'+str(data.get('AS#'))+' '+str(data.get('ASName'))+' '+str(data.get('isp'))+' '+str(data.get('org'))+'\n\n'
+        output_line = output_line + 'IP:\t' + str(data.get('Id')) + '\t' + str(data.get('Label')) + '\n'
+        output_line = output_line + 'Geo:\t' + str(data.get('countryCode')) + ' ' + str(data.get('country')) + ' ' + str(data.get('city')) + '\n'
+        output_line = output_line + 'Lat:\t' + str(data.get('lat')) + '\tLong:\t' + str(data.get('lon')) + '\tTZ:\t' + str(data.get('timezone')) + '\n'
+        output_line = output_line + 'AS#:\t' + str(data.get('AS#')) + ' ' + str(data.get('ASName')) + ' ' + str(data.get('isp')) + ' ' + str(data.get('org')) + '\n\n'
     else:
-        output_line = output_line+'IP:'+str(data.get('Id'))
-        output_line = output_line+' Geo:'+str(data.get('countryCode'))
-        output_line = output_line+' AS#:'+str(data.get('AS#'))
-        output_line = output_line+' AS:'+str(data.get('ASName'))
-        output_line = output_line+'('+str(data.get('Label'))+')\n'
+        output_line = output_line + 'IP:' + str(data.get('Id'))
+        output_line = output_line + ' Geo:' + str(data.get('countryCode'))
+        output_line = output_line + ' AS#:' + str(data.get('AS#'))
+        output_line = output_line + ' AS:' + str(data.get('ASName'))
+        output_line = output_line + '(' + str(data.get('Label')) + ')\n'
     filehandle.write(output_line)
 
 def display_version():
@@ -226,7 +226,7 @@ def main():
         ipAddr = args.address.strip()
         ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
         data = process_address(ipAddr, httpconn)
-        outputfilehandle.write(ipAddr+'\n\n')
+        outputfilehandle.write(ipAddr + '\n\n')
         if data != '**Skip Me**':
             output_txt(outputfilehandle, data, True)
         else:
