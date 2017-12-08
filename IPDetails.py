@@ -47,8 +47,8 @@ def getrDNS(addr):
 def splitASdetails(combined, string):
     # In this block we need to look at spliting out the AS# and ASName from
     # the as field from the API.
-    if not combined==None:
-        if not combined=="":
+    if not combined == None:
+        if not combined == "":
             temp=combined.split(" ", 1)
             asn=temp[0]
             name=temp[1]
@@ -81,24 +81,24 @@ def process_address(ipAddr, http):
             ipa = ipaddress.ip_address(ipAddr)
 
             if ipa.is_multicast:
-                if ipa.version==4:
+                if ipa.version == 4:
                     wv='RFC3171 Multicast Network'
                 else:
                     wv='RFC2373 Multicast Network'
             elif ipa.is_loopback:
-                if ipa.version==4:
+                if ipa.version == 4:
                     wv='RFC3330 Loopback Network'
                 else:
                     wv='RFC2372 Loopback Network'
             elif ipa.is_private:
-                    if sys.version[0]==3 and sys.version[1]>5:
-                        if ipa.version==4:
+                    if sys.version[0] == 3 and sys.version[1]>5:
+                        if ipa.version == 4:
                             wv='RFC1918 Private Network'
                         else:
                             wv='RFC4193 Unique Local Address'
                         u = {'Label':ipa.reverse_pointer}
                     else:
-                        if ipa.version==4:
+                        if ipa.version == 4:
                             wv='RFC1918 Private Network'
                             reverse_octets = str(ipa).split('.')[::-1]
                             reverse_pointer = '.'.join(reverse_octets) + '.in-addr.arpa'
@@ -200,7 +200,7 @@ def main():
         display_version()
         return()
 
-    if args.format=='csv':
+    if args.format == 'csv':
         csvhandle=output_csv_headers(args.outputfilehandle)
 
     httpconn = http.client.HTTPConnection('ip-api.com')
@@ -228,11 +228,11 @@ def main():
 
             data = process_address(ipAddr, httpconn)
             if data != '**Skip Me**':
-                if args.format=='csv':
+                if args.format == 'csv':
                     output_csv(csvhandle, data)
-                elif args.format=='json':
+                elif args.format == 'json':
                     output_json(args.outputfilehandle, data)
-                elif args.format=='txt':
+                elif args.format == 'txt':
                     output_txt(args.outputfilehandle, data, args.detail)
                 else:
                     print('Incorrect file output type selected', args.format)
