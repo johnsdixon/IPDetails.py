@@ -9,12 +9,12 @@
 from ast import literal_eval
 import argparse
 import csv
-import http.client
-import ipaddress
 import json
 import socket
 import sys
 import time
+import http.client
+import ipaddress
 
 # Setup global variables
 datablock = {}
