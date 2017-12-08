@@ -47,7 +47,7 @@ def getrDNS(addr):
 def splitASdetails(combined, string):
     # In this block we need to look at spliting out the AS# and ASName from
     # the as field from the API.
-    if not combined == None:
+    if not combined is None:
         if not combined == "":
             temp = combined.split(" ", 1)
             asn = temp[0]
@@ -126,7 +126,7 @@ def process_address(ipAddr, http):
             # If we've got a successful lookup, add it to the data
             # or use the IP address if not
 
-            if name == None:
+            if name is None:
                 if statusupdates:
                     print
             else:
