@@ -1,10 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
-#
-#  IPDetails.py is a program for adding details about an IP address.
-#  The input is read from a file, and output to another in a .csv format
-#
+"""IPDetails.py is a program for adding details about an IP address.
+   The input is read from a file, and output to another in a .csv format
+   """
 
 from ast import literal_eval
 import argparse
@@ -21,6 +19,13 @@ datablock = {}
 statusupdates = False
 
 def callAPI(addr, httphandle):
+    """Call the IP-COM.API to gain information on the IP address
+
+    Keyword arguments:
+    addr -- the IPAddress to be checked
+    httphandle -- the http connection to use for the lookup
+    """
+
     httphandle.request("GET", "/json/" + addr)
     try:
         resp = httphandle.getresponse()
@@ -37,6 +42,11 @@ def callAPI(addr, httphandle):
     return data
 
 def getrDNS(addr):
+    """Get a reverse DNS lookup for the IP address
+
+    Keyword arguments:
+    addr -- the IP address to lookup
+    """
     try:
         name, alias, addrlist = socket.gethostbyaddr(addr)
     except socket.herror:
@@ -44,8 +54,12 @@ def getrDNS(addr):
     return(name, alias, addrlist)
 
 def splitASdetails(combined, string):
-    # In this block we need to look at spliting out the AS# and ASName from
-    # the as field from the API.
+    """Spliting out the AS# and ASName from the as field from the API.
+
+    Keyword arguments:
+    combined -- the combined string passed from the API
+    string -- a substitue sting to insert if necessary
+    """
     if not combined is None:
         if not combined == "":
             temp = combined.split(" ", 1)
@@ -64,6 +78,11 @@ def splitASdetails(combined, string):
     return(asn, name)
 
 def what_is_address(ipa):
+    """Check what kind of an IP address is being looked up.
+
+    Keyword arguments:
+    ipa -- an IPaddressV4 or IPaddressV6 to be looked up
+    """
     if ipa.is_multicast:
         if ipa.version == 4:
             wv = 'RFC3171 Multicast Network'
@@ -108,6 +127,12 @@ def what_is_address(ipa):
     return (wv, u)
 
 def process_address(ipAddr, httphandle):
+    """ Process an IP address that we've found
+
+    Keyword arguments:
+    ipAddr -- IP address to deal with
+    httphandle -- http connection we are using to connect to the server
+    """
     # Get connection to the server
     if ipAddr:
 
@@ -146,6 +171,11 @@ def process_address(ipAddr, httphandle):
             return '**Skip Me**'
 
 def output_csv_headers(filehandle):
+    """Output the CSV headers to the output filehandle
+
+    Keyword arguments:
+    filehandle -- the handle where we write the headers
+    """
     # Print the CSV output headers
     outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org',
                  'status', 'countryCode', 'country', 'region', 'regionName',
@@ -157,6 +187,12 @@ def output_csv_headers(filehandle):
     return csvhandle
 
 def output_csv(csvhandle, data):
+    """Output a CSV row
+
+    Keyword arguments:
+    csvhandle -- the csvhandle to the file we write
+    data -- the dict to write
+    """
     outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org',
                  'status', 'countryCode', 'country', 'region', 'regionName',
                  'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
@@ -166,9 +202,22 @@ def output_csv(csvhandle, data):
     csvhandle.writerow(outrow)
 
 def output_json(filehandle, data):
+    """Output a JSON element
+
+    Keyword arguments:
+    filehandle -- the output handle where we write the data
+    data -- the data to write
+    """
     json.dump(data, filehandle)
 
 def output_txt(filehandle, data, density):
+    """Output a text line or block
+
+    Keyword arguments:
+    filehandle -- the output handle where we write the data
+    data -- what we are going to write
+    density -- boolean True if we write a multiline block, or a single line
+    """
     output_line = ''
     if density:
         output_line = ('IP:\t' + str(data.get('Id')) + '\t'
@@ -194,6 +243,7 @@ def output_txt(filehandle, data, density):
     filehandle.write(output_line)
 
 def display_version():
+    """Display the code version and description"""
     print('IPDetails.py', ' ',)
     print('1.1-20171126')
     print
@@ -203,6 +253,7 @@ def display_version():
     print('Output is to stdout, or to a file. Formatting can be set as an option')
 
 def main():
+    """The main function"""
     desc = 'Collect details about an IP address using the IP-API.COM database'
     license = 'Licensed under GPL-3.0(c) Copyright 2017 John S. Dixon.'
     parser = argparse.ArgumentParser(prog='IPDetails.py',
