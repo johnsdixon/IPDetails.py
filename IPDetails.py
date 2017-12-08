@@ -20,17 +20,17 @@ import ipaddress
 datablock = {}
 statusupdates = False
 
-def callAPI(addr, http):
-    http.request("GET", "/json/" + addr)
+def callAPI(addr, httphandle):
+    httphandle.request("GET", "/json/" + addr)
     try:
-        resp = http.getresponse()
+        resp = httphandle.getresponse()
 
     except httplib.BadStatusLine:
         # Close and reopen HTTP connection
-        http.close()
-        http = http.client.HTTPConnection('ip-api.com')
-        http.request("GET", "/json/" + addr)
-        resp = http.getresponse()
+        httphandle.close()
+        httphandle = httphandle.client.HTTPConnection('ip-api.com')
+        httphandle.request("GET", "/json/" + addr)
+        resp = httphandle.getresponse()
 
     # remove unicode characters in some of the returned text
     data = literal_eval(resp.read().decode('utf-8', 'replace'))
@@ -63,7 +63,51 @@ def splitASdetails(combined, string):
         name = string
     return(asn, name)
 
-def process_address(ipAddr, http):
+def what_is_address(ipa):
+    if ipa.is_multicast:
+        if ipa.version == 4:
+            wv = 'RFC3171 Multicast Network'
+        else:
+            wv = 'RFC2373 Multicast Network'
+    elif ipa.is_loopback:
+        if ipa.version == 4:
+            wv = 'RFC3330 Loopback Network'
+        else:
+            wv = 'RFC2372 Loopback Network'
+    elif ipAddr.is_private:
+        if sys.version[0] == 3 and sys.version[1] > 5:
+            if ipa.version == 4:
+                wv = 'RFC1918 Private Network'
+            else:
+                wv = 'RFC4193 Unique Local Address'
+            u = {'Label':ipa.reverse_pointer}
+        else:
+            if ipa.version == 4:
+                wv = 'RFC1918 Private Network'
+                reverse_octets = str(ipa).split('.')[::-1]
+                reverse_pointer = '.'.join(reverse_octets) + '.in-addr.arpa'
+                u = {'Label':reverse_pointer}
+            else:
+                wv = 'RFC4193 Unique Local Address'
+                reverse_chars = ipa.exploded[::-1].replace(':', '')
+                reverse_pointer = '.'.join(reverse_chars) + '.ip6.arpa'
+                u = {'Label':reverse_pointer}
+    else:
+        detail = callAPI(ipAddr, httphandle)
+        data.update(detail)
+        # data now holds API response, split the AS
+
+        if not data.get('as') == "":
+            wu, wv = splitASdetails(data.get('as'), data.get('message'))
+        else:
+            wv = data.get('message')
+
+        # Don't overload the API server,
+        # wait half a second between iterations
+        time.sleep(.5)
+    return (wv, u)
+
+def process_address(ipAddr, httphandle):
     # Get connection to the server
     if ipAddr:
 
@@ -78,48 +122,7 @@ def process_address(ipAddr, http):
 
         try:
             ipa = ipaddress.ip_address(ipAddr)
-
-            if ipa.is_multicast:
-                if ipa.version == 4:
-                    wv = 'RFC3171 Multicast Network'
-                else:
-                    wv = 'RFC2373 Multicast Network'
-            elif ipa.is_loopback:
-                if ipa.version == 4:
-                    wv = 'RFC3330 Loopback Network'
-                else:
-                    wv = 'RFC2372 Loopback Network'
-            elif ipa.is_private:
-                if sys.version[0] == 3 and sys.version[1] > 5:
-                    if ipa.version == 4:
-                        wv = 'RFC1918 Private Network'
-                    else:
-                        wv = 'RFC4193 Unique Local Address'
-                    u = {'Label':ipa.reverse_pointer}
-                else:
-                    if ipa.version == 4:
-                        wv = 'RFC1918 Private Network'
-                        reverse_octets = str(ipa).split('.')[::-1]
-                        reverse_pointer = '.'.join(reverse_octets) + '.in-addr.arpa'
-                        u = {'Label':reverse_pointer}
-                    else:
-                        wv = 'RFC4193 Unique Local Address'
-                        reverse_chars = ipa.exploded[::-1].replace(':', '')
-                        reverse_pointer = '.'.join(reverse_chars) + '.ip6.arpa'
-                        u = {'Label':reverse_pointer}
-            else:
-                detail = callAPI(ipAddr, http)
-                data.update(detail)
-                # data now holds API response, split the AS
-
-                if not data.get('as') == "":
-                    wu, wv = splitASdetails(data.get('as'), data.get('message'))
-                else:
-                    wv = data.get('message')
-
-                # Don't overload the API server,
-                # wait half a second between iterations
-                time.sleep(.5)
+            wv, u = what_is_address(ipAddr)
 
             name, alias, addrlist = getrDNS(ipAddr)
             # If we've got a successful lookup, add it to the data
