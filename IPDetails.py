@@ -168,24 +168,26 @@ def output_json(filehandle, data):
 def output_txt(filehandle, data, density):
     output_line = ''
     if density:
-        output_line = output_line + 'IP:\t' + str(data.get('Id')) + '\t'
-        output_line = output_line + str(data.get('Label')) + '\n'
-        output_line = output_line + 'Geo:\t' + str(data.get('countryCode'))
-        output_line = output_line + ' ' + str(data.get('country')) + ' '
-        output_line = output_line + str(data.get('city')) + '\n'
-        output_line = output_line + 'Lat:\t' + str(data.get('lat'))
-        output_line = output_line + '\tLong:\t' + str(data.get('lon'))
-        output_line = output_line + '\tTZ:\t' + str(data.get('timezone')) + '\n'
-        output_line = output_line + 'AS#:\t' + str(data.get('AS#')) + ' '
-        output_line = output_line + str(data.get('ASName')) + ' '
-        output_line = output_line + str(data.get('isp')) + ' '
-        output_line = output_line + str(data.get('org')) + '\n\n'
+        output_line = ('IP:\t' + str(data.get('Id')) + '\t'
+                       + str(data.get('Label')) + '\n'
+                       + 'Geo:\t' + str(data.get('countryCode'))
+                       + ' ' + str(data.get('country')) + ' '
+                       + str(data.get('city')) + '\n'
+                       + 'Lat:\t' + str(data.get('lat'))
+                       + '\tLong:\t' + str(data.get('lon'))
+                       + '\tTZ:\t' + str(data.get('timezone')) + '\n'
+                       + 'AS#:\t' + str(data.get('AS#')) + ' '
+                       + str(data.get('ASName')) + ' '
+                       + str(data.get('isp')) + ' '
+                       + str(data.get('org')) + '\n\n'
+                      )
     else:
-        output_line = output_line + 'IP:' + str(data.get('Id'))
-        output_line = output_line + ' Geo:' + str(data.get('countryCode'))
-        output_line = output_line + ' AS#:' + str(data.get('AS#'))
-        output_line = output_line + ' AS:' + str(data.get('ASName'))
-        output_line = output_line + '(' + str(data.get('Label')) + ')\n'
+        output_line = ('IP:' + str(data.get('Id'))
+                       + ' Geo:' + str(data.get('countryCode'))
+                       + ' AS#:' + str(data.get('AS#'))
+                       + ' AS:' + str(data.get('ASName'))
+                       + '(' + str(data.get('Label')) + ')\n'
+                      )
     filehandle.write(output_line)
 
 def display_version():
