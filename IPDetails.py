@@ -240,7 +240,7 @@ def output_txt(filehandle, data, density):
 def display_version():
     """Display the code version and description"""
     print('IPDetails.py', ' ',)
-    print('1.1-20171126')
+    print('1.2-20171209')
     print
     print('IPDetails.py', )
     print(' is a program for finding details about an IP address.')
