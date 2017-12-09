@@ -144,7 +144,7 @@ def process_address(target_ip_address, proc_add_http):
                 # wait half a second between iterations
                 time.sleep(.5)
 
-            name, alias, addrlist = get_reverse_dns(target_ip_address)
+            name = get_reverse_dns(target_ip_address)[0]
             # If we've got a successful lookup, add it to the data
             # or use the IP address if not
 
@@ -172,12 +172,14 @@ def output_csv_headers(filehandle):
     filehandle -- the handle where we write the headers
     """
     # Print the CSV output headers
-    outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org',
-                 'status', 'countryCode', 'country', 'region', 'regionName',
-                 'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
-
-    writer = csv.writer(filehandle)
-    csvhandle = csv.DictWriter(filehandle, fieldnames=outfields)
+    csvhandle = csv.DictWriter(filehandle, fieldnames=['Id', 'Label', 'AS#',
+                                                       'ASName', 'as', 'isp',
+                                                       'org', 'status',
+                                                       'countryCode', 'country',
+                                                       'region', 'regionName',
+                                                       'city', 'zip', 'lat',
+                                                       'lon', 'timezone',
+                                                       'message', 'query'])
     csvhandle.writeheader()
     return csvhandle
 
@@ -188,9 +190,7 @@ def output_csv(csvhandle, data):
     csvhandle -- the csvhandle to the file we write
     data -- the dict to write
     """
-    outfields = ['Id', 'Label', 'AS#', 'ASName', 'as', 'isp', 'org',
-                 'status', 'countryCode', 'country', 'region', 'regionName',
-                 'city', 'zip', 'lat', 'lon', 'timezone', 'message', 'query']
+
     # Now process the JSON data and output as CSV
     outrow = {}
     outrow.update(data)
