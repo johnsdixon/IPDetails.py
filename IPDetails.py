@@ -18,7 +18,7 @@ import ipaddress
 datablock = {}
 statusupdates = False
 
-def callAPI(addr, httphandle):
+def call_ipapi(addr, httphandle):
     """Call the IP-COM.API to gain information on the IP address
 
     Keyword arguments:
@@ -41,7 +41,7 @@ def callAPI(addr, httphandle):
     data = literal_eval(resp.read().decode('utf-8', 'replace'))
     return data
 
-def getrDNS(addr):
+def get_reverse_dns(addr):
     """Get a reverse DNS lookup for the IP address
 
     Keyword arguments:
@@ -53,7 +53,7 @@ def getrDNS(addr):
         name, alias, addrlist = None, None, None
     return(name, alias, addrlist)
 
-def splitASdetails(combined, string):
+def split_as_details(combined, string):
     """Spliting out the AS# and ASName from the as field from the API.
 
     Keyword arguments:
@@ -78,6 +78,12 @@ def splitASdetails(combined, string):
     return(asn, name)
 
 def process_address(ipAddr, http):
+    """ Process an IP address that we've found
+
+    Keyword arguments:
+    ipAddr -- IP address to deal with
+    httphandle -- http connection we are using to connect to the server
+    """
     # Get connection to the server
     if ipAddr:
 
@@ -122,12 +128,12 @@ def process_address(ipAddr, http):
                         reverse_pointer = '.'.join(reverse_chars) + '.ip6.arpa'
                         u = {'Label':reverse_pointer}
             else:
-                detail = callAPI(ipAddr, http)
+                detail = call_ipapi(ipAddr, http)
                 data.update(detail)
                 # data now holds API response, split the AS
 
                 if not data.get('as') == "":
-                    wu, wv = splitASdetails(data.get('as'), data.get('message'))
+                    wu, wv = split_as_details(data.get('as'), data.get('message'))
                 else:
                     wv = data.get('message')
 
@@ -135,7 +141,7 @@ def process_address(ipAddr, http):
                 # wait half a second between iterations
                 time.sleep(.5)
 
-            name, alias, addrlist = getrDNS(ipAddr)
+            name, alias, addrlist = get_reverse_dns(ipAddr)
             # If we've got a successful lookup, add it to the data
             # or use the IP address if not
 
