@@ -16,13 +16,14 @@ import ipaddress
 
 # Setup global variables
 datablock = {}
-statusupdates = False
+global status_updates
+status_updates = False
 
 def call_ipapi(addr, httphandle):
     """Call the IP-COM.API to gain information on the IP address
 
     Keyword arguments:
-    addr -- the IPAddress to be checked
+    addr -- the target_ip_addressess to be checked
     httphandle -- the http connection to use for the lookup
     """
 
@@ -77,85 +78,87 @@ def split_as_details(combined, string):
         name = string
     return(asn, name)
 
-def process_address(ipAddr, http):
+def process_address(target_ip_address, proc_add_http):
     """ Process an IP address that we've found
 
     Keyword arguments:
-    ipAddr -- IP address to deal with
+    target_ip_address -- IP address to deal with
     httphandle -- http connection we are using to connect to the server
     """
     # Get connection to the server
-    if ipAddr:
+    if target_ip_address:
 
         # Validate we have a proper IP Address
-        if statusupdates:
-            print(ipAddr,)
+        if status_updates:
+            print(target_ip_address,)
 
-        wu = 0
-        wv = ''
-        u = {'Label':ipAddr}
-        data = {'Id':ipAddr}
+        working_asnum = 0
+        working_asname = ''
+        label = {'Label':target_ip_address}
+        data = {'Id':target_ip_address}
 
         try:
-            ipa = ipaddress.ip_address(ipAddr)
+            ipa = ipaddress.ip_address(target_ip_address)
 
             if ipa.is_multicast:
                 if ipa.version == 4:
-                    wv = 'RFC3171 Multicast Network'
+                    working_asname = 'RFC3171 Multicast Network'
                 else:
-                    wv = 'RFC2373 Multicast Network'
+                    working_asname = 'RFC2373 Multicast Network'
             elif ipa.is_loopback:
                 if ipa.version == 4:
-                    wv = 'RFC3330 Loopback Network'
+                    working_asname = 'RFC3330 Loopback Network'
                 else:
-                    wv = 'RFC2372 Loopback Network'
+                    working_asname = 'RFC2372 Loopback Network'
             elif ipa.is_private:
                 if sys.version[0] == 3 and sys.version[1] > 5:
                     if ipa.version == 4:
-                        wv = 'RFC1918 Private Network'
+                        working_asname = 'RFC1918 Private Network'
                     else:
-                        wv = 'RFC4193 Unique Local Address'
-                    u = {'Label':ipa.reverse_pointer}
+                        working_asname = 'RFC4193 Unique Local Address'
+                    label = {'Label':ipa.reverse_pointer}
                 else:
                     if ipa.version == 4:
-                        wv = 'RFC1918 Private Network'
+                        working_asname = 'RFC1918 Private Network'
                         reverse_octets = str(ipa).split('.')[::-1]
                         reverse_pointer = '.'.join(reverse_octets) + '.in-addr.arpa'
-                        u = {'Label':reverse_pointer}
+                        label = {'Label':reverse_pointer}
                     else:
-                        wv = 'RFC4193 Unique Local Address'
+                        working_asname = 'RFC4193 Unique Local Address'
                         reverse_chars = ipa.exploded[::-1].replace(':', '')
                         reverse_pointer = '.'.join(reverse_chars) + '.ip6.arpa'
-                        u = {'Label':reverse_pointer}
+                        label = {'Label':reverse_pointer}
             else:
-                detail = call_ipapi(ipAddr, http)
+                detail = call_ipapi(target_ip_address, proc_add_http)
                 data.update(detail)
                 # data now holds API response, split the AS
 
                 if not data.get('as') == "":
-                    wu, wv = split_as_details(data.get('as'), data.get('message'))
+                    working_asnum, working_asname = split_as_details(
+                        data.get('as'), data.get('message')
+                        )
                 else:
-                    wv = data.get('message')
+                    working_asname = data.get('message')
 
                 # Don't overload the API server,
                 # wait half a second between iterations
                 time.sleep(.5)
 
-            name, alias, addrlist = get_reverse_dns(ipAddr)
+            name, alias, addrlist = get_reverse_dns(target_ip_address)
             # If we've got a successful lookup, add it to the data
             # or use the IP address if not
 
             if name is None:
-                if statusupdates:
+                if status_updates:
                     print
             else:
-                u = {'Label':name}
-                if statusupdates:
+                label = {'Label':name}
+                if status_updates:
                     print(name)
 
-            data.update(u)
-            data.update({"AS#":int(wu)})
-            data.update({"ASName":wv})
+            data.update(label)
+            data.update({"AS#":int(working_asnum)})
+            data.update({"ASName":working_asname})
 
             return data
 
@@ -247,10 +250,10 @@ def display_version():
 def main():
     """The main function"""
     desc = 'Collect details about an IP address using the IP-API.COM database'
-    license = 'Licensed under GPL-3.0(c) Copyright 2017 John S. Dixon.'
+    license_text = 'Licensed under GPL-3.0(c) Copyright 2017 John S. Dixon.'
     parser = argparse.ArgumentParser(prog='IPDetails.py',
                                      description=desc,
-                                     epilog=license)
+                                     epilog=license_text)
     parser.add_argument('-a', dest='address',
                         help='IP Address to lookup')
     helper = 'Input filename containing IP Addresses, one per line.'
@@ -269,7 +272,8 @@ def main():
                         help='Output as txt, csv or json format file.',
                         default='txt')
     parser.add_argument('-d', dest='detail',
-                        help='Set detailed level of text output', action='store_true')
+                        help='Set detailed level of text output',
+                        default='False', action='store_true')
     args = parser.parse_args()
 
     if args.version:
@@ -282,29 +286,30 @@ def main():
     httpconn = http.client.HTTPConnection('ip-api.com')
 
     if args.address != None:
+        status_updates = False
         # We have a single address to lookup, so let's open stdout to write, and process it
         outputfilehandle = sys.stdout
         outputfilehandle.write('Looking up address:\t')
-        ipAddr = args.address.strip()
-        ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
-        data = process_address(ipAddr, httpconn)
-        outputfilehandle.write(ipAddr + '\n\n')
+        target_ip_address = args.address.strip()
+        target_ip_address = '.'.join(i.lstrip('0') or '0' for i in target_ip_address.split('.'))
+        data = process_address(target_ip_address, httpconn)
+        outputfilehandle.write(target_ip_address + '\n\n')
         if data != '**Skip Me**':
             output_txt(outputfilehandle, data, True)
         else:
             outputfilehandle.write('\nInvalid IP address? Check and try again.\n')
     else:
         # Loop through the input, process each line and output.
-        statusupdates = True
+        status_updates = True
         for line in args.inputfilehandle:
-            ipAddr = line.strip()
+            target_ip_address = line.strip()
             # Remove leading 0's from IP address(if they occur)
             # Courtesy of
             # https://stackoverflow.com/questions/44852721/
             #   remove-leading-zeros-in-ip-address-using-python/44852779
-            ipAddr = '.'.join(i.lstrip('0') or '0' for i in ipAddr.split('.'))
+            target_ip_address = '.'.join(i.lstrip('0') or '0' for i in target_ip_address.split('.'))
 
-            data = process_address(ipAddr, httpconn)
+            data = process_address(target_ip_address, httpconn)
             if data != '**Skip Me**':
                 if args.format == 'csv':
                     output_csv(csvhandle, data)
